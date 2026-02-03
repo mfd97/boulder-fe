@@ -10,11 +10,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
+import AnimatedMeshGradient from '@/components/AnimatedMeshGradient';
 
 export default function HomeScreen() {
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.wrapper}>
+      <AnimatedMeshGradient />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar barStyle="light-content" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -96,14 +99,18 @@ export default function HomeScreen() {
           <Ionicons name="chevron-forward" size={20} color={colors.charcoal} />
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
     backgroundColor: colors.charcoal,
+  },
+  container: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
