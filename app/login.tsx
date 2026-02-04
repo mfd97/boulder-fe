@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
+import { router } from 'expo-router';
 
 export default function LoginScreen() {
   return (
@@ -77,7 +78,7 @@ export default function LoginScreen() {
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={()=>router.push("/register")}>
                 <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
             </View>
