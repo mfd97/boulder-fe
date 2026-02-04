@@ -17,5 +17,5 @@ export default function Index() {
     return null;
   }
 
-  return <Redirect href="/(protected)/(tabs)/home" />;
+  return <Redirect href="/login" />;
 }
