@@ -13,6 +13,7 @@ export interface RegisterBody {
 }
 
 export async function login(body: LoginBody): Promise<AuthResponse> {
+  console.log(body)
   const response = await instance.post<{ success: true; data: AuthResponse }>(
     "/auth/login",
     body
@@ -27,3 +28,17 @@ export async function register(body: RegisterBody): Promise<AuthResponse> {
   );
   return response.data.data;
 }
+
+
+
+/**
+ * تسجيل الخروج (حذف الـ token فقط)
+ */
+export const logout = async (): Promise<void> => {
+  try {
+    await instance.post('/auth/logout');
+  } catch (error) {
+    console.error('❌ Logout API error:', error);
+    // نكمل حتى لو فشل الـ request
+  }
+};
