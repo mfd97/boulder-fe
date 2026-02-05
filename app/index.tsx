@@ -5,7 +5,6 @@ import { useContext, useEffect, useState } from 'react';
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
   const {isAuth} = useContext(AuthContext)
-  console.log("user in index", isAuth)
 
   useEffect(() => {
     // Small delay to ensure smooth transition
@@ -20,8 +19,8 @@ export default function Index() {
     return null;
   }
 
-  if(isReady && isAuth === false){
-    return <Redirect href="/login" />
+  if (!isAuth) {
+    return <Redirect href="/login" />;
   }
 
   return <Redirect href="/(protected)/(tabs)/home" />;

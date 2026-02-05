@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useContext } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,25 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
+import { logout } from '@/api/auth';
+import * as SecureStore from 'expo-secure-store';
+import { AuthContext } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
+  const { setIsAuth } = useContext(AuthContext);
+  const router = useRouter();
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await logout();
+    } finally {
+      await SecureStore.deleteItemAsync('token');
+      setIsAuth(false);
+      router.replace('/login');
+    }
+  }, [router, setIsAuth]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -66,7 +83,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionButtonText}>EDIT PREFERENCES</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>LOG OUT</Text>
           </TouchableOpacity>
         </View>
