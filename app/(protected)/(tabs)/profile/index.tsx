@@ -1,33 +1,45 @@
-import React, { useCallback, useContext } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/constants/colors';
 import { logout } from '@/api/auth';
-import * as SecureStore from 'expo-secure-store';
+import { colors } from '@/constants/colors';
 import { AuthContext } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import React, { useCallback, useContext, useMemo } from 'react';
+import {
+    Alert,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
-  const { setIsAuth } = useContext(AuthContext);
+  const { setIsAuth, setUser, user } = useContext(AuthContext);
   const router = useRouter();
+
+  // Generate initials from user's fullName
+  const userInitials = useMemo(() => {
+    if (!user?.fullName) return 'U';
+    const names = user.fullName.trim().split(/\s+/);
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return user.fullName[0].toUpperCase();
+  }, [user?.fullName]);
 
   const handleLogout = useCallback(async () => {
     try {
       await logout();
     } finally {
       await SecureStore.deleteItemAsync('token');
+      await SecureStore.deleteItemAsync('user');
+      setUser(null);
       setIsAuth(false);
       router.replace('/login');
     }
-  }, [router, setIsAuth]);
+  }, [router, setIsAuth, setUser]);
 
   const confirmLogout = () => {
     Alert.alert(
@@ -64,10 +76,10 @@ export default function ProfileScreen() {
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>AS</Text>
+              <Text style={styles.avatarText}>{userInitials}</Text>
             </View>
           </View>
-          <Text style={styles.userName}>Alex Sterling</Text>
+          <Text style={styles.userName}>{user?.fullName || 'User'}</Text>
         </View>
 
         {/* Statistics Section */}
@@ -93,9 +105,6 @@ export default function ProfileScreen() {
 
         {/* Action Buttons */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>EDIT PREFERENCES</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.logoutButton} onPress={confirmLogout}>
             <Text style={styles.logoutButtonText}>LOG OUT</Text>
           </TouchableOpacity>
@@ -205,20 +214,6 @@ const styles = StyleSheet.create({
   },
   actionsSection: {
     gap: 12,
-  },
-  actionButton: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.sage,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.offWhite,
-    letterSpacing: 1,
   },
   logoutButton: {
     backgroundColor: colors.darkGrey,

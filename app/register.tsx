@@ -22,7 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { setIsAuth } = useContext(AuthContext);
+  const { setIsAuth, setUser } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -34,8 +34,11 @@ export default function RegisterScreen() {
       try {
         // Store token in SecureStore
         await SecureStore.setItemAsync('token', data.token);
+        // Store user data in SecureStore
+        await SecureStore.setItemAsync('user', JSON.stringify(data.user));
 
         // Update AuthContext and navigate to home
+        setUser(data.user);
         setIsAuth(true);
         router.replace('/(protected)/(tabs)/home');
       } catch (error) {

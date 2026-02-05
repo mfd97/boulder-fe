@@ -21,7 +21,7 @@ import { setItemAsync } from 'expo-secure-store';
 export default function LoginScreen() {
   const [Email, setEmail] = useState("")
   const [Password, setPassword] = useState("")
-  const { setIsAuth} = useContext(AuthContext)
+  const { setIsAuth, setUser } = useContext(AuthContext)
   
   // console.log(Email, Password)
 
@@ -32,10 +32,14 @@ export default function LoginScreen() {
       console.log(data)
       // 1. Store the token
       await setItemAsync("token", data.token)
-      // 2. Set user to use
+      // 2. Store user data
+      await setItemAsync("user", JSON.stringify(data.user))
+      // 3. Set user in context
+      setUser(data.user)
+      // 4. Set auth state
       setIsAuth(true)     
 
-      //3. navigate to home page
+      //5. navigate to home page
       router.replace("/(protected)/(tabs)/home")
     },
     onError(err){
