@@ -29,7 +29,8 @@ export async function register(body: RegisterBody): Promise<AuthResponse> {
     );
     return response.data.data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
+    throw error;
   }
 }
 

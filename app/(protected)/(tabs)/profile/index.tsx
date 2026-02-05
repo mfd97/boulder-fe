@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
@@ -27,6 +28,18 @@ export default function ProfileScreen() {
       router.replace('/login');
     }
   }, [router, setIsAuth]);
+
+  const confirmLogout = () => {
+    Alert.alert(
+      'Log out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log out', style: 'destructive', onPress: handleLogout },
+      ]
+    );
+  };
+  
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -83,7 +96,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionButtonText}>EDIT PREFERENCES</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <TouchableOpacity style={styles.logoutButton} onPress={confirmLogout}>
             <Text style={styles.logoutButtonText}>LOG OUT</Text>
           </TouchableOpacity>
         </View>

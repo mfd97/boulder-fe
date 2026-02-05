@@ -22,7 +22,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { setUser, setToken } = useContext(AuthContext) || {};
+  const { setIsAuth } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -34,15 +34,10 @@ export default function RegisterScreen() {
       try {
         // Store token in SecureStore
         await SecureStore.setItemAsync('token', data.token);
-        
-        // Update AuthContext
-        if (setUser && setToken) {
-          setUser(data.user);
-          setToken(data.token);
-        }
-        
-        // Navigate to login
-        router.push('/login');
+
+        // Update AuthContext and navigate to home
+        setIsAuth(true);
+        router.replace('/(protected)/(tabs)/home');
       } catch (error) {
         Alert.alert('Error', 'Failed to save authentication data. Please try again.');
       }
