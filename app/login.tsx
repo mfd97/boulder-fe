@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,41 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
 import { router } from 'expo-router';
+import { useMutation } from '@tanstack/react-query';
+import { login } from '@/api/auth';
+import { AuthContext } from '@/context/AuthContext';
+import { setItemAsync } from 'expo-secure-store';
 
 export default function LoginScreen() {
+  const [Email, setEmail] = useState("")
+  const [Password, setPassword] = useState("")
+  const { setIsAuth} = useContext(AuthContext)
+  
+  // console.log(Email, Password)
+
+  const {mutate} = useMutation({
+    mutationKey:["login"],
+    mutationFn: ()=>login({email:Email, password:Password }),
+    onSuccess: async (data, variables, onMutateResult, context) =>{
+      console.log(data)
+      // 1. Store the token
+      await setItemAsync("token", data.token)
+      // 2. Set user to use
+      setIsAuth(true)     
+
+      //3. navigate to home page
+      router.replace("/(protected)/(tabs)/home")
+    },
+    onError(err){
+      console.log(err)
+    }
+  })
+
+  const handleLogin = () => {
+    console.log("here")
+    mutate()
+  } 
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -43,9 +76,11 @@ export default function LoginScreen() {
               <Text style={styles.label}>EMAIL</Text>
               <TextInput
                 style={styles.input}
-                value="student@boulder.app"
-                editable={false}
+                value={Email}
+                onChangeText={(txt)=> setEmail(txt)}
                 autoCapitalize="none"
+                placeholder='Email'
+                placeholderTextColor={colors.greenGlow}
               />
             </View>
 
@@ -60,9 +95,11 @@ export default function LoginScreen() {
               <View style={styles.passwordContainer}>
                 <TextInput
                   style={styles.passwordInput}
-                  value="********"
-                  editable={false}
+                  value={Password}
+                  onChangeText={(txt)=> setPassword(txt)}
                   secureTextEntry
+                  placeholder='Password'
+                  placeholderTextColor={colors.greenGlow}
                 />
                 <TouchableOpacity style={styles.eyeIcon}>
                   <Ionicons name="eye-outline" size={20} color={colors.offWhite} />
@@ -71,13 +108,13 @@ export default function LoginScreen() {
             </View>
 
             {/* Login Button */}
-            <TouchableOpacity style={styles.loginButton}>
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>LOGIN</Text>
             </TouchableOpacity>
 
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <Text style={styles.signUpText}>Dont have an account? </Text>
               <TouchableOpacity onPress={()=>router.push("/register")}>
                 <Text style={styles.signUpLink}>Sign Up</Text>
               </TouchableOpacity>
