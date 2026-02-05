@@ -83,11 +83,12 @@ export default function RegisterScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Ada Lovelace"
-                placeholderTextColor={colors.offWhite}
+                placeholderTextColor={colors.greenGlow}
                 autoCapitalize="words"
                 value={fullName}
                 onChangeText={setFullName}
                 editable={!registerMutation.isPending}
+                
               />
             </View>
 
@@ -97,7 +98,7 @@ export default function RegisterScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="name@example.com"
-                placeholderTextColor={colors.offWhite}
+                placeholderTextColor={colors.greenGlow}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -113,7 +114,7 @@ export default function RegisterScreen() {
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="••••••••"
-                  placeholderTextColor={colors.offWhite}
+                  placeholderTextColor={colors.greenGlow}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}

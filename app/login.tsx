@@ -80,6 +80,7 @@ export default function LoginScreen() {
                 onChangeText={(txt)=> setEmail(txt)}
                 autoCapitalize="none"
                 placeholder='Email'
+                placeholderTextColor={colors.greenGlow}
               />
             </View>
 
@@ -98,6 +99,7 @@ export default function LoginScreen() {
                   onChangeText={(txt)=> setPassword(txt)}
                   secureTextEntry
                   placeholder='Password'
+                  placeholderTextColor={colors.greenGlow}
                 />
                 <TouchableOpacity style={styles.eyeIcon}>
                   <Ionicons name="eye-outline" size={20} color={colors.offWhite} />
