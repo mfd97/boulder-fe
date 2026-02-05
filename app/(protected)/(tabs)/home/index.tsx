@@ -108,10 +108,9 @@ export default function HomeScreen() {
           </View>
 
           {/* Start Quiz Button */}
-          <TouchableOpacity style={styles.startQuizButton}>
+          <TouchableOpacity style={styles.startQuizButton} onPress={() => router.push(`/quiz/CreateQuiz`)}>
             <Text
               style={styles.startQuizText}
-              onPress={() => router.push(`/quiz/CreateQuiz`)}
             >
               START QUIZ
             </Text>

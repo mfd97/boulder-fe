@@ -6,16 +6,31 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { colors } from "@/constants/colors";
+import { createQuiz } from "@/api/quiz";
+import { useMutation } from "@tanstack/react-query";
 
 export default function StartQuizScreen() {
   // 1. Hooks
   const [topic, setTopic] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
 
   // 2. Derived values
-  const level = "beginner"; // MVP: fixed level
+  const level = "easy"; // MVP: fixed level
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: () => createQuiz(topic, level),
+    onSuccess: (data) => {
+      console.log(data);
+      Alert.alert("Quiz Ready!", `Your quiz on "${topic}" has been created.`);
+      setTopic("");
+    },
+    onError: (error) => {
+      console.error(error);
+      Alert.alert("Error", "Failed to generate quiz. Please try again.");
+    },
+  });
 
   // 3. Handlers
   const handleSubmit = () => {
@@ -24,15 +39,8 @@ export default function StartQuizScreen() {
       return;
     }
 
-    setLoading(true);
-
-    // Placeholder for quiz generation logic
-    console.log("Starting quiz with:", {
-      topic,
-      level,
-    });
-
-    setLoading(false);
+    console.log("Starting quiz with:", { topic, level });
+    mutate();
   };
 
   // 4. JSX
@@ -48,19 +56,31 @@ export default function StartQuizScreen() {
         placeholderTextColor={colors.sage}
         value={topic}
         onChangeText={setTopic}
+        editable={!isPending}
         accessibilityLabel="Learning topic input"
       />
 
       <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+        style={[styles.button, isPending && styles.buttonDisabled]}
         onPress={handleSubmit}
         accessibilityLabel="Start quiz button"
-        disabled={loading}
+        disabled={isPending}
       >
-        <Text style={styles.buttonText}>
-          {loading ? "Starting..." : "Start Quiz"}
-        </Text>
+        {isPending ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.charcoal} />
+            <Text style={styles.buttonText}>  Generating...</Text>
+          </View>
+        ) : (
+          <Text style={styles.buttonText}>Start Quiz</Text>
+        )}
       </TouchableOpacity>
+
+      {isPending && (
+        <Text style={styles.loadingHint}>
+          AI is creating your quiz. This may take 30-60 seconds...
+        </Text>
+      )}
 
       <Text style={styles.levelText}>Level: Beginner</Text>
     </View>
@@ -106,6 +126,18 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     fontSize: 16,
     fontWeight: "600",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingHint: {
+    marginTop: 12,
+    color: colors.sage,
+    fontSize: 13,
+    textAlign: "center",
+    fontStyle: "italic",
   },
   levelText: {
     marginTop: 16,
