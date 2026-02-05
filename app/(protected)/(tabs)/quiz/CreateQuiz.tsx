@@ -8,9 +8,11 @@ import {
   Alert,
 } from "react-native";
 import { colors } from "@/constants/colors";
+import { useRouter } from "expo-router";
 
 export default function StartQuizScreen() {
   // 1. Hooks
+  const router = useRouter();
   const [topic, setTopic] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -33,6 +35,7 @@ export default function StartQuizScreen() {
     });
 
     setLoading(false);
+    router.push("/(protected)/(tabs)/quiz/quizScreen");
   };
 
   // 4. JSX
@@ -73,44 +76,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.charcoal,
     padding: 16,
     justifyContent: "center",
-  },
-  title: {
-    fontSize: 24,
-    color: colors.offWhite,
-    marginBottom: 8,
-    fontWeight: "600",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.sage,
-    marginBottom: 24,
-  },
-  input: {
-    backgroundColor: colors.darkGrey,
-    color: colors.offWhite,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: colors.greenGlow,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: colors.charcoal,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  levelText: {
-    marginTop: 16,
-    color: colors.sage,
-    fontSize: 14,
-    textAlign: "center",
   },
 });
