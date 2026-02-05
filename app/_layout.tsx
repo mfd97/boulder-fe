@@ -13,7 +13,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LaunchScreen from "@/components/LaunchScreen";
 import { colors } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
-import type { User } from "@/types";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -23,28 +22,29 @@ const queryClient = new QueryClient();
 function RootLayoutNav() {
   const [isLaunching, setIsLaunching] = useState(true);
   const appOpacity = useSharedValue(0);
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuth, setIsAuth] = useState(false);
 
-  const logout = useCallback(async () => {
-    await SecureStore.deleteItemAsync("token");
-    setToken(null);
-    setUser(null);
-  }, []);
+  // const logout = useCallback(async () => {
+  //   await SecureStore.deleteItemAsync("token");
+  //   setUser(null);
+  // }, []);
 
-  const authValue = {
-    user,
-    token,
-    setUser,
-    setToken,
-    logout,
-  };
+  const checkToken = async () => {
+    const token = await SecureStore.getItemAsync("token")
+    if(token){
+      setIsAuth(true)
+    }
+  }
+
 
   useEffect(() => {
+    checkToken()
     const timer = setTimeout(() => {
       SplashScreen.hideAsync();
     }, 100);
     return () => clearTimeout(timer);
+
+
   }, []);
 
   const handleAnimationComplete = () => {
@@ -62,7 +62,7 @@ function RootLayoutNav() {
   }));
 
   return (
-    <AuthContext.Provider value={authValue}>
+    <AuthContext.Provider value={{isAuth, setIsAuth}}>
       <View style={{ flex: 1, backgroundColor: colors.charcoal }}>
         {isLaunching && (
           <LaunchScreen onAnimationComplete={handleAnimationComplete} />
