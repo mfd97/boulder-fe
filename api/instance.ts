@@ -1,17 +1,21 @@
-import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 
-const baseURL ='http://192.168.13.56:8000';
+
+const baseURL = __DEV__
+  ? "http://localhost:8000"
+  : "https://192.168.12.118:8000";
+
 
 export const instance = axios.create({
   baseURL: `${baseURL}/api`,
   timeout: 10000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
 });
 
 instance.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await SecureStore.getItemAsync("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

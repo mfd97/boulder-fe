@@ -1,5 +1,5 @@
-import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Redirect } from "expo-router";
+import { useEffect, useState } from "react";
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
@@ -17,5 +17,10 @@ export default function Index() {
     return null;
   }
 
+
   return <Redirect href="/register" />;
+
+  //return <Redirect href="/home" />;
+  //return <Redirect href="/login" />;
+
 }
