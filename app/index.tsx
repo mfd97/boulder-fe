@@ -18,7 +18,7 @@ export default function Index() {
   }
 
 
-  return <Redirect href="/register" />;
+  return <Redirect href="/(protected)/(tabs)/quiz/quizScreen"/>;
 
   //return <Redirect href="/home" />;
   //return <Redirect href="/login" />;
