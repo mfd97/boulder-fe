@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
@@ -10,13 +9,13 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/constants/colors';
 import { router } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { login } from '@/api/auth';
 import { AuthContext } from '@/context/AuthContext';
 import { setItemAsync } from 'expo-secure-store';
+import Input from './components/Input';
 
 export default function LoginScreen() {
   const [Email, setEmail] = useState("")
@@ -72,39 +71,27 @@ export default function LoginScreen() {
           {/* Form */}
           <View style={styles.form}>
             {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>EMAIL</Text>
-              <TextInput
-                style={styles.input}
-                value={Email}
-                onChangeText={(txt)=> setEmail(txt)}
-                autoCapitalize="none"
-                placeholder='Email'
-                placeholderTextColor={colors.greenGlow}
-              />
-            </View>
+            <Input
+              label="Email"
+              value={Email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+            />
 
             {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <View style={styles.passwordHeader}>
-                <Text style={styles.label}>PASSWORD</Text>
-                <TouchableOpacity>
-                  <Text style={styles.forgotPassword}>Forgot Password?</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  value={Password}
-                  onChangeText={(txt)=> setPassword(txt)}
-                  secureTextEntry
-                  placeholder='Password'
-                  placeholderTextColor={colors.greenGlow}
-                />
-                <TouchableOpacity style={styles.eyeIcon}>
-                  <Ionicons name="eye-outline" size={20} color={colors.offWhite} />
-                </TouchableOpacity>
-              </View>
+            <View style={styles.passwordSection}>
+              <TouchableOpacity style={styles.forgotPasswordBtn}>
+                <Text style={styles.forgotPassword}>Forgot Password?</Text>
+              </TouchableOpacity>
+              <Input
+                label="Password"
+                value={Password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="password"
+              />
             </View>
 
             {/* Login Button */}
@@ -172,51 +159,12 @@ const styles = StyleSheet.create({
   form: {
     width: '100%',
   },
-  inputContainer: {
-    marginBottom: 24,
+  passwordSection: {
+    position: 'relative',
   },
-  passwordHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  forgotPasswordBtn: {
+    alignSelf: 'flex-end',
     marginBottom: 8,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.offWhite,
-    opacity: 0.8,
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  input: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.offWhite,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.offWhite,
-  },
-  eyeIcon: {
-    paddingRight: 16,
-    paddingVertical: 14,
   },
   forgotPassword: {
     fontSize: 12,

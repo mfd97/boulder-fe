@@ -1,7 +1,6 @@
 import { register } from '@/api/auth';
 import { colors } from '@/constants/colors';
 import { AuthContext } from '@/context/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
@@ -14,16 +13,15 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Input from './components/Input';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { setIsAuth } = useContext(AuthContext);
-  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,61 +76,35 @@ export default function RegisterScreen() {
           {/* Form */}
           <View style={styles.form}>
             {/* Full Name Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>FULL NAME</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ada Lovelace"
-                placeholderTextColor={colors.greenGlow}
-                autoCapitalize="words"
-                value={fullName}
-                onChangeText={setFullName}
-                editable={!registerMutation.isPending}
-                
-              />
-            </View>
+            <Input
+              label="Full Name"
+              value={fullName}
+              onChangeText={setFullName}
+              autoCapitalize="words"
+              autoComplete="name"
+              editable={!registerMutation.isPending}
+            />
 
             {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>EMAIL</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="name@example.com"
-                placeholderTextColor={colors.greenGlow}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                editable={!registerMutation.isPending}
-              />
-            </View>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              editable={!registerMutation.isPending}
+            />
 
             {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>PASSWORD</Text>
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={styles.passwordInput}
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.greenGlow}
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                  editable={!registerMutation.isPending}
-                />
-                <TouchableOpacity 
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                  disabled={registerMutation.isPending}
-                >
-                  <Ionicons 
-                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                    size={20} 
-                    color={colors.offWhite} 
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="password-new"
+              editable={!registerMutation.isPending}
+            />
 
             {/* Create Account Button */}
             <TouchableOpacity 
@@ -188,45 +160,6 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
-  },
-  inputContainer: {
-    marginBottom: 24,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.offWhite,
-    marginBottom: 8,
-    letterSpacing: 1,
-  },
-  input: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.offWhite,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.offWhite,
-  },
-  eyeIcon: {
-    paddingRight: 16,
-    paddingVertical: 14,
   },
   createButton: {
     backgroundColor: colors.sage,
