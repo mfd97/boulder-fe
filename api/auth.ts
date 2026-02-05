@@ -1,5 +1,5 @@
-import { instance } from "./instance";
 import type { AuthResponse } from "@/types";
+import { instance } from "./instance";
 
 export interface LoginBody {
   email: string;
@@ -21,9 +21,13 @@ export async function login(body: LoginBody): Promise<AuthResponse> {
 }
 
 export async function register(body: RegisterBody): Promise<AuthResponse> {
-  const response = await instance.post<{ success: true; data: AuthResponse }>(
-    "/auth/register",
-    body
-  );
-  return response.data.data;
+  try {
+    const response = await instance.post<{ success: true; data: AuthResponse }>(
+      "/auth/register",
+      body
+    );
+    return response.data.data;
+  } catch (error) {
+    console.log(error)
+  }
 }
