@@ -1,19 +1,69 @@
-import React from 'react';
+import { register } from '@/api/auth';
+import { colors } from '@/constants/colors';
+import { AuthContext } from '@/context/AuthContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useMutation } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
+import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import React, { useContext, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
+  Alert,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/constants/colors';
 
 export default function RegisterScreen() {
+  const router = useRouter();
+  const { setIsAuth } = useContext(AuthContext);
+  const [showPassword, setShowPassword] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const registerMutation = useMutation({
+    mutationFn: register,
+    onSuccess: async (data) => {
+      try {
+        // Store token in SecureStore
+        await SecureStore.setItemAsync('token', data.token);
+
+        // Update AuthContext and navigate to home
+        setIsAuth(true);
+        router.replace('/(protected)/(tabs)/home');
+      } catch (error) {
+        Alert.alert('Error', 'Failed to save authentication data. Please try again.');
+      }
+    },
+    onError: (error: AxiosError<{ error?: string }>) => {
+      const errorMessage = 
+        error?.response?.data?.error || 
+        error?.message || 
+        'Registration failed. Please try again.';
+      Alert.alert('Registration Failed', errorMessage);
+    },
+  });
+
+  const handleRegister = () => {
+    if (!fullName.trim() || !email.trim() || !password.trim()) {
+      Alert.alert('Validation Error', 'Please fill in all fields.');
+      return;
+    }
+
+    registerMutation.mutate({
+      fullName: fullName.trim(),
+      email: email.trim(),
+      password,
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -33,8 +83,12 @@ export default function RegisterScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Ada Lovelace"
-                placeholderTextColor={colors.offWhite}
+                placeholderTextColor={colors.greenGlow}
                 autoCapitalize="words"
+                value={fullName}
+                onChangeText={setFullName}
+                editable={!registerMutation.isPending}
+                
               />
             </View>
 
@@ -44,9 +98,12 @@ export default function RegisterScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="name@example.com"
-                placeholderTextColor={colors.offWhite}
+                placeholderTextColor={colors.greenGlow}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+                editable={!registerMutation.isPending}
               />
             </View>
 
@@ -57,18 +114,38 @@ export default function RegisterScreen() {
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="••••••••"
-                  placeholderTextColor={colors.offWhite}
-                  secureTextEntry
+                  placeholderTextColor={colors.greenGlow}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!registerMutation.isPending}
                 />
-                <TouchableOpacity style={styles.eyeIcon}>
-                  <Ionicons name="eye-outline" size={20} color={colors.offWhite} />
+                <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                  disabled={registerMutation.isPending}
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                    size={20} 
+                    color={colors.offWhite} 
+                  />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Create Account Button */}
-            <TouchableOpacity style={styles.createButton}>
-              <Text style={styles.createButtonText}>CREATE ACCOUNT</Text>
+            <TouchableOpacity 
+              style={[
+                styles.createButton,
+                registerMutation.isPending && styles.createButtonDisabled
+              ]}
+              onPress={handleRegister}
+              disabled={registerMutation.isPending}
+            >
+              <Text style={styles.createButtonText}>
+                {registerMutation.isPending ? 'CREATING...' : 'CREATE ACCOUNT'}
+              </Text>
             </TouchableOpacity>
 
             {/* Terms of Service */}
@@ -79,7 +156,7 @@ export default function RegisterScreen() {
             {/* Login Link */}
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Already a member? </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push('/login')}>
                 <Text style={styles.loginLink}>Login</Text>
               </TouchableOpacity>
             </View>
@@ -186,5 +263,8 @@ const styles = StyleSheet.create({
     color: colors.offWhite,
     fontWeight: '600',
     textDecorationLine: 'underline',
+  },
+  createButtonDisabled: {
+    opacity: 0.6,
   },
 });

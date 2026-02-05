@@ -1,5 +1,5 @@
-import { instance } from "./instance";
 import type { AuthResponse } from "@/types";
+import { instance } from "./instance";
 
 export interface LoginBody {
   email: string;
@@ -13,6 +13,7 @@ export interface RegisterBody {
 }
 
 export async function login(body: LoginBody): Promise<AuthResponse> {
+  console.log(body)
   const response = await instance.post<{ success: true; data: AuthResponse }>(
     "/auth/login",
     body
@@ -21,9 +22,28 @@ export async function login(body: LoginBody): Promise<AuthResponse> {
 }
 
 export async function register(body: RegisterBody): Promise<AuthResponse> {
-  const response = await instance.post<{ success: true; data: AuthResponse }>(
-    "/auth/register",
-    body
-  );
-  return response.data.data;
+  try {
+    const response = await instance.post<{ success: true; data: AuthResponse }>(
+      "/auth/register",
+      body
+    );
+    return response.data.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
 }
+
+
+
+/**
+ * تسجيل الخروج (حذف الـ token فقط)
+ */
+export const logout = async (): Promise<void> => {
+  try {
+    await instance.post('/auth/logout');
+  } catch (error) {
+    console.error('❌ Logout API error:', error);
+    // نكمل حتى لو فشل الـ request
+  }
+};

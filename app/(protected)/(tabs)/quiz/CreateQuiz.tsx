@@ -11,9 +11,11 @@ import {
 import { colors } from "@/constants/colors";
 import { createQuiz } from "@/api/quiz";
 import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 
 export default function StartQuizScreen() {
   // 1. Hooks
+  const router = useRouter();
   const [topic, setTopic] = useState<string>("");
 
   // 2. Derived values
@@ -25,6 +27,8 @@ export default function StartQuizScreen() {
       console.log(data);
       Alert.alert("Quiz Ready!", `Your quiz on "${topic}" has been created.`);
       setTopic("");
+      // Navigate to quiz screen after creation
+      router.push("/(protected)/(tabs)/quiz/quizScreen");
     },
     onError: (error) => {
       console.error(error);

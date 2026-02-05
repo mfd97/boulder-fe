@@ -1,8 +1,10 @@
-import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
+import { AuthContext } from '@/context/AuthContext';
+import { Redirect } from 'expo-router';
+import { useContext, useEffect, useState } from 'react';
 
 export default function Index() {
   const [isReady, setIsReady] = useState(false);
+  const { isAuth } = useContext(AuthContext);
 
   useEffect(() => {
     // Small delay to ensure smooth transition
@@ -17,6 +19,11 @@ export default function Index() {
     return null;
   }
 
-  return <Redirect href="/home" />;
-  //return <Redirect href="/login" />;
+  if (!isAuth) {
+    return <Redirect href="/login" />;
+  }
+
+
+  return <Redirect href="/(protected)/(tabs)/home" />;
+
 }
