@@ -6,12 +6,74 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
+import { getQuizHistory, QuizHistoryItem } from '@/api/quiz';
 
-export default function BookmarksScreen() {
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 1) {
+    return 'JUST NOW';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} MINUTE${diffInMinutes > 1 ? 'S' : ''} AGO`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours} HOUR${diffInHours > 1 ? 'S' : ''} AGO`;
+  } else if (diffInDays < 7) {
+    return `${diffInDays} DAY${diffInDays > 1 ? 'S' : ''} AGO`;
+  } else {
+    return date.toLocaleDateString('en-US', {
+      month: 'SHORT',
+      day: 'numeric',
+      year: 'numeric',
+    }).toUpperCase();
+  }
+}
+
+function getDifficultyColor(difficulty: string): string {
+  switch (difficulty.toLowerCase()) {
+    case 'easy':
+      return colors.greenGlow;
+    case 'medium':
+      return '#FFA726'; // Orange
+    case 'hard':
+      return '#EF5350'; // Red
+    default:
+      return colors.sage;
+  }
+}
+
+export default function HistoryScreen() {
+  const router = useRouter();
+  const { 
+    data: quizzes, 
+    isLoading, 
+    isError, 
+    refetch,
+    isRefetching 
+  } = useQuery({
+    queryKey: ['quizHistory'],
+    queryFn: getQuizHistory,
+  });
+
+  const handleQuizPress = (quizId: string) => {
+    router.push({
+      pathname: "/(protected)/(tabs)/quiz/quizSummary",
+      params: { quizId },
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -30,52 +92,100 @@ export default function BookmarksScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={colors.greenGlow}
+          />
+        }
       >
         {/* Title Section */}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>Bookmarks</Text>
+          <Text style={styles.title}>Quiz History</Text>
+          <Text style={styles.subtitle}>Your completed quizzes</Text>
         </View>
 
-        {/* Bookmark Cards */}
-        <View style={styles.bookmarksList}>
-          {/* First Bookmark Card */}
-          <View style={styles.bookmarkCard}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.savedText}>SAVED 2 DAYS AGO</Text>
-              <Ionicons name="bookmark" size={20} color={colors.offWhite} />
-            </View>
-            <Text style={styles.questionText}>
-              Explain the concept of &apos;Backpropagation&apos; in neural networks and how it utilizes the chain rule.
-            </Text>
-            <TouchableOpacity style={styles.revealButton}>
-              <Text style={styles.revealButtonText}>REVEAL ANSWER</Text>
-              <Ionicons name="eye-outline" size={18} color={colors.offWhite} />
-            </TouchableOpacity>
+        {/* Loading State */}
+        {isLoading && (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={colors.greenGlow} />
+            <Text style={styles.loadingText}>Loading history...</Text>
           </View>
+        )}
 
-          {/* Second Bookmark Card */}
-          <View style={styles.bookmarkCard}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.savedText}>SAVED 5 DAYS AGO</Text>
-              <Ionicons name="bookmark" size={20} color={colors.offWhite} />
-            </View>
-            <Text style={styles.questionText}>
-              What is the difference between L1 and L2 regularization in terms of their effect on weight vectors?
-            </Text>
-            <TouchableOpacity style={styles.revealButton}>
-              <Text style={styles.revealButtonText}>REVEAL ANSWER</Text>
-              <Ionicons name="eye-outline" size={18} color={colors.offWhite} />
+        {/* Error State */}
+        {isError && (
+          <View style={styles.centerContainer}>
+            <Ionicons name="alert-circle-outline" size={48} color={colors.sage} />
+            <Text style={styles.emptyText}>Failed to load history</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+              <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !isError && quizzes?.length === 0 && (
+          <View style={styles.centerContainer}>
+            <Ionicons name="time-outline" size={48} color={colors.sage} />
+            <Text style={styles.emptyText}>No quizzes yet</Text>
+            <Text style={styles.emptySubtext}>
+              Complete a quiz to see it here
+            </Text>
+          </View>
+        )}
+
+        {/* History Cards */}
+        {!isLoading && !isError && quizzes && quizzes.length > 0 && (
+          <View style={styles.historyList}>
+            {quizzes.map((quiz: QuizHistoryItem) => (
+              <TouchableOpacity 
+                key={quiz._id} 
+                style={styles.historyCard}
+                onPress={() => handleQuizPress(quiz._id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.cardHeader}>
+                  <Text style={styles.timeText}>
+                    {formatTimeAgo(quiz.completedAt || quiz.createdAt)}
+                  </Text>
+                  <View 
+                    style={[
+                      styles.difficultyBadge, 
+                      { backgroundColor: getDifficultyColor(quiz.difficulty) + '20' }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        styles.difficultyText, 
+                        { color: getDifficultyColor(quiz.difficulty) }
+                      ]}
+                    >
+                      {quiz.difficulty.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+                
+                <Text style={styles.topicText}>{quiz.topic}</Text>
+                
+                <View style={styles.cardFooter}>
+                  <View style={styles.questionCountContainer}>
+                    <Ionicons name="help-circle-outline" size={16} color={colors.sage} />
+                    <Text style={styles.questionCountText}>
+                      {quiz.correctCount}/{quiz.questionCount} correct
+                    </Text>
+                  </View>
+                  <View style={styles.scoreContainer}>
+                    <Text style={styles.scoreText}>{quiz.percentage}%</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.sage} />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
-
-      {/* Bottom Button */}
-      <View style={styles.bottomButtonContainer}>
-        <TouchableOpacity style={styles.startReviewButton}>
-          <Text style={styles.startReviewButtonText}>START REVIEW SESSION</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -121,18 +231,57 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.offWhite,
   },
+  subtitle: {
+    fontSize: 14,
+    color: colors.sage,
+    marginTop: 4,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 100, // Space for bottom button
+    paddingBottom: 40,
   },
-  bookmarksList: {
+  centerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: colors.sage,
+    marginTop: 12,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.offWhite,
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: colors.sage,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: colors.darkGrey,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.offWhite,
+  },
+  historyList: {
     gap: 16,
   },
-  bookmarkCard: {
+  historyCard: {
     backgroundColor: colors.darkGrey,
     borderRadius: 12,
     padding: 16,
@@ -143,56 +292,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  savedText: {
+  timeText: {
     fontSize: 11,
     color: colors.offWhite,
     opacity: 0.6,
     letterSpacing: 0.5,
   },
-  questionText: {
-    fontSize: 15,
-    color: colors.offWhite,
-    lineHeight: 22,
-    marginBottom: 16,
+  difficultyBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  revealButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.charcoal,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 8,
+  difficultyText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  revealButtonText: {
-    fontSize: 12,
+  topicText: {
+    fontSize: 18,
     fontWeight: '600',
     color: colors.offWhite,
-    letterSpacing: 0.5,
+    lineHeight: 24,
+    marginBottom: 12,
   },
-  bottomButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: 16,
-    backgroundColor: colors.charcoal,
-    borderTopWidth: 1,
-    borderTopColor: colors.darkGrey,
-  },
-  startReviewButton: {
-    backgroundColor: colors.sage,
-    borderRadius: 12,
-    paddingVertical: 16,
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.charcoal,
   },
-  startReviewButtonText: {
+  questionCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  questionCountText: {
+    fontSize: 13,
+    color: colors.sage,
+  },
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  scoreText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.charcoal,
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    color: colors.greenGlow,
   },
 });

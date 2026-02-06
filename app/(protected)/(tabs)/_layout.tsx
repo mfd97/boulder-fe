@@ -35,9 +35,9 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="bookmarks"
         options={{
-          title: 'BOOKMARKS',
+          title: 'HISTORY',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bookmark" size={size} color={color} />
+            <Ionicons name="time" size={size} color={color} />
           ),
         }}
       />

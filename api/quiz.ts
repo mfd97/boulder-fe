@@ -12,3 +12,76 @@ export async function createQuiz(topic: string, difficulty: string) {
         throw error;
     }
 }
+
+export interface QuizHistoryItem {
+    _id: string;
+    topic: string;
+    difficulty: string;
+    createdAt: string;
+    completedAt: string;
+    questionCount: number;
+    correctCount: number;
+    totalScore: number;
+    earnedScore: number;
+    percentage: number;
+}
+
+export async function getQuizHistory(): Promise<QuizHistoryItem[]> {
+    try {
+        const response = await instance.get("/quiz/history");
+        return response.data.data;
+    } catch (error) {
+        console.log("getQuizHistory error:", error);
+        throw error;
+    }
+}
+
+export interface QuizSubmitData {
+    quizId: string;
+    answers: Record<string, string>;
+    correctCount: number;
+    totalScore: number;
+    earnedScore: number;
+}
+
+export async function submitQuizResult(data: QuizSubmitData) {
+    try {
+        const response = await instance.post("/quiz/submit", data);
+        return response.data.data;
+    } catch (error) {
+        console.log("submitQuizResult error:", error);
+        throw error;
+    }
+}
+
+export interface QuizQuestion {
+    _id: string;
+    question: string;
+    options: string[];
+    correct_answer: string;
+    score: number;
+}
+
+export interface QuizDetail {
+    _id: string;
+    topic: string;
+    difficulty: string;
+    questions: QuizQuestion[];
+    isCompleted: boolean;
+    answers: Record<string, string>;
+    correctCount: number;
+    totalScore: number;
+    earnedScore: number;
+    createdAt: string;
+    completedAt: string;
+}
+
+export async function getQuizById(id: string): Promise<QuizDetail> {
+    try {
+        const response = await instance.get(`/quiz/${id}`);
+        return response.data.data;
+    } catch (error) {
+        console.log("getQuizById error:", error);
+        throw error;
+    }
+}

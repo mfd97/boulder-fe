@@ -24,11 +24,13 @@ export default function StartQuizScreen() {
   const { mutate, isPending } = useMutation({
     mutationFn: () => createQuiz(topic, level),
     onSuccess: (data) => {
-      console.log(data);
-      Alert.alert("Quiz Ready!", `Your quiz on "${topic}" has been created.`);
+      console.log("Quiz created:", data);
       setTopic("");
-      // Navigate to quiz screen after creation
-      router.push("/(protected)/(tabs)/quiz/quizScreen");
+      // Navigate to quiz screen with quiz data
+      router.push({
+        pathname: "/(protected)/(tabs)/quiz/quizScreen",
+        params: { quizData: JSON.stringify(data) },
+      });
     },
     onError: (error) => {
       console.error(error);
