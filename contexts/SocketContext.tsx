@@ -25,6 +25,15 @@ interface GameInvitation {
   rounds: number;
 }
 
+interface GameCreated {
+  gameId: string;
+  topic: string;
+  difficulty: string;
+  rounds: number;
+  guestName: string;
+  status: string;
+}
+
 interface GameQuestion {
   gameId: string;
   questionIndex: number;
@@ -84,6 +93,8 @@ interface SocketContextType {
   // Game events
   onInvitation: (callback: (data: GameInvitation) => void) => void;
   offInvitation: (callback: (data: GameInvitation) => void) => void;
+  onGameCreated: (callback: (data: GameCreated) => void) => void;
+  offGameCreated: (callback: (data: GameCreated) => void) => void;
   onGameStarted: (callback: (data: GameStarted) => void) => void;
   offGameStarted: (callback: (data: GameStarted) => void) => void;
   onQuestion: (callback: (data: GameQuestion) => void) => void;
@@ -167,6 +178,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
   const offInvitation = useCallback((callback: (data: GameInvitation) => void) => {
     socket?.off('game:invitation', callback);
+  }, [socket]);
+
+  const onGameCreated = useCallback((callback: (data: GameCreated) => void) => {
+    socket?.on('game:created', callback);
+  }, [socket]);
+
+  const offGameCreated = useCallback((callback: (data: GameCreated) => void) => {
+    socket?.off('game:created', callback);
   }, [socket]);
 
   const onGameStarted = useCallback((callback: (data: GameStarted) => void) => {
@@ -278,6 +297,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     disconnect,
     onInvitation,
     offInvitation,
+    onGameCreated,
+    offGameCreated,
     onGameStarted,
     offGameStarted,
     onQuestion,

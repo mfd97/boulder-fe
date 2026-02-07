@@ -57,7 +57,7 @@ function AnimatedButton({
 
 export default function CreateGameScreen() {
   const router = useRouter();
-  const { connect, isConnected, createGame, onError, offError } = useSocket();
+  const { connect, isConnected, createGame, onGameCreated, offGameCreated, onError, offError } = useSocket();
   
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
@@ -77,6 +77,26 @@ export default function CreateGameScreen() {
       connect();
     }
   }, [connect, isConnected]);
+
+  // Handle game created (invite sent) — then navigate to waiting room
+  useEffect(() => {
+    const handleGameCreated = (data: { gameId: string; topic: string; difficulty: string; rounds: number; guestName: string }) => {
+      setIsCreating(false);
+      router.replace({
+        pathname: '/(protected)/game/waiting',
+        params: {
+          gameId: String(data.gameId),
+          topic: data.topic,
+          difficulty: data.difficulty,
+          rounds: String(data.rounds),
+          guestName: data.guestName,
+        },
+      });
+    };
+
+    onGameCreated(handleGameCreated);
+    return () => offGameCreated(handleGameCreated);
+  }, [onGameCreated, offGameCreated, router]);
 
   // Handle socket errors
   useEffect(() => {
@@ -114,17 +134,6 @@ export default function CreateGameScreen() {
       rounds,
       guestId: selectedFriend._id,
     });
-
-    // Navigate to waiting room
-    router.replace({
-      pathname: '/(protected)/game/waiting',
-      params: {
-        topic: topic.trim(),
-        difficulty,
-        rounds: rounds.toString(),
-        guestName: selectedFriend.fullName,
-      },
-    });
   };
 
   const canCreate = topic.trim().length > 0 && selectedFriend !== null && !isCreating;
@@ -132,6 +141,19 @@ export default function CreateGameScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
+
+      {/* Loading overlay: preparing challenge (generating questions, then sending invite) */}
+      {isCreating && (
+        <View style={styles.preparingOverlay}>
+          <View style={styles.preparingCard}>
+            <ActivityIndicator size="large" color={colors.greenGlow} />
+            <Text style={styles.preparingTitle}>Preparing your challenge</Text>
+            <Text style={styles.preparingSubtitle}>
+              Generating questions… We'll notify {selectedFriend?.fullName} when it's ready.
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Header */}
       <View style={styles.header}>
@@ -484,5 +506,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.charcoal,
+  },
+  preparingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  preparingCard: {
+    backgroundColor: colors.darkGrey,
+    borderRadius: 16,
+    padding: 32,
+    marginHorizontal: 24,
+    alignItems: 'center',
+    maxWidth: 320,
+  },
+  preparingTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.offWhite,
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  preparingSubtitle: {
+    fontSize: 14,
+    color: colors.sage,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

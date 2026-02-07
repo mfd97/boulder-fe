@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   blob: {
     position: 'absolute',
-    opacity: 0.5,
+    opacity: 0.35,
   },
   blurView: {
     flex: 1,

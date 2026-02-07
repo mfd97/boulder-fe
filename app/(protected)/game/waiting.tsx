@@ -24,6 +24,7 @@ import { useSocket } from '@/contexts/SocketContext';
 export default function WaitingRoomScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{
+    gameId?: string;
     topic: string;
     difficulty: string;
     rounds: string;
@@ -40,7 +41,7 @@ export default function WaitingRoomScreen() {
     offError,
   } = useSocket();
 
-  const [gameId, setGameId] = useState<string | null>(null);
+  const gameId = params.gameId ?? null;
 
   // Pulse animation for waiting indicator
   const pulseScale = useSharedValue(1);
