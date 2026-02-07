@@ -85,3 +85,21 @@ export async function getQuizById(id: string): Promise<QuizDetail> {
         throw error;
     }
 }
+
+export interface StreakData {
+    streak: number;
+    hasCompletedToday: boolean;
+    todayAverageScore: number;
+    todayQuizCount: number;
+    lastCompletedDate?: string;
+}
+
+export async function getStreak(): Promise<StreakData> {
+    try {
+        const response = await instance.get("/quiz/streak");
+        return response.data.data;
+    } catch (error) {
+        console.log("getStreak error:", error);
+        throw error;
+    }
+}

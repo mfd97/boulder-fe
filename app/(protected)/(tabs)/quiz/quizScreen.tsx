@@ -9,6 +9,7 @@ import {
 import { useState, useMemo } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { colors } from "@/constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { submitQuizResult } from "@/api/quiz";
@@ -31,6 +32,7 @@ interface QuizData {
 
 export default function QuizScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { quizData: quizDataParam } = useLocalSearchParams<{ quizData: string }>();
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
@@ -98,6 +100,9 @@ export default function QuizScreen() {
         totalScore,
         earnedScore,
       });
+      // Invalidate queries so they refetch with new data
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
+      queryClient.invalidateQueries({ queryKey: ['quizHistory'] });
     } catch (error) {
       console.log("Failed to save quiz result:", error);
       // Continue to show summary even if save fails

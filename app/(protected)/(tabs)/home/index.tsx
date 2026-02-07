@@ -9,11 +9,37 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
+import Svg, { Circle } from "react-native-svg";
 import { colors } from "@/constants/colors";
 import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
+import { getStreak } from "@/api/quiz";
+
+// Progress ring dimensions
+const RING_SIZE = 100;
+const RING_STROKE_WIDTH = 8;
+const RING_RADIUS = (RING_SIZE - RING_STROKE_WIDTH) / 2;
+const RING_CIRCUMFERENCE = RING_RADIUS * 2 * Math.PI;
 
 export default function HomeScreen() {
+  // Fetch streak data
+  const { data: streakData, isLoading, error } = useQuery({
+    queryKey: ['streak'],
+    queryFn: getStreak,
+    refetchOnMount: 'always', // Always refresh when component mounts
+    staleTime: 0, // Consider data stale immediately
+  });
+
+  // Debug logging
+  console.log('[HomeScreen] Streak data:', streakData);
+  console.log('[HomeScreen] Loading:', isLoading, 'Error:', error);
+
+  const streak = streakData?.streak ?? 0;
+  const hasCompletedToday = streakData?.hasCompletedToday ?? false;
+  const todayAverageScore = streakData?.todayAverageScore ?? 0;
+  const todayQuizCount = streakData?.todayQuizCount ?? 0;
+
   return (
     <View style={styles.wrapper}>
       <AnimatedMeshGradient />
@@ -45,21 +71,55 @@ export default function HomeScreen() {
             <Text style={styles.sectionLabel}>STREAK</Text>
             <View style={styles.streakRow}>
               <View style={styles.streakLeft}>
-                <Text style={styles.streakNumber}>12</Text>
-                <Text style={styles.streakSubtext}>Days consistency</Text>
+                <Text style={styles.streakNumber}>{streak}</Text>
+                <Text style={styles.streakSubtext}>
+                  {streak === 1 ? "Day consistency" : "Days consistency"}
+                </Text>
               </View>
               <View style={styles.progressCircleContainer}>
-                <View style={styles.progressCircle}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { transform: [{ rotate: "270deg" }] },
-                    ]}
+                {/* SVG Progress Ring */}
+                <Svg width={RING_SIZE} height={RING_SIZE} style={styles.progressSvg}>
+                  {/* Background Circle */}
+                  <Circle
+                    cx={RING_SIZE / 2}
+                    cy={RING_SIZE / 2}
+                    r={RING_RADIUS}
+                    stroke={colors.darkGrey}
+                    strokeWidth={RING_STROKE_WIDTH}
+                    fill="transparent"
                   />
-                  <View style={styles.progressInner}>
-                    <Text style={styles.progressText}>75%</Text>
-                    <Text style={styles.progressLabel}>DAILY</Text>
-                  </View>
+                  {/* Progress Circle - only show when there's a score */}
+                  {hasCompletedToday && (
+                    <Circle
+                      cx={RING_SIZE / 2}
+                      cy={RING_SIZE / 2}
+                      r={RING_RADIUS}
+                      stroke={colors.greenGlow}
+                      strokeWidth={RING_STROKE_WIDTH}
+                      fill="transparent"
+                      strokeDasharray={RING_CIRCUMFERENCE}
+                      strokeDashoffset={RING_CIRCUMFERENCE - (todayAverageScore / 100) * RING_CIRCUMFERENCE}
+                      strokeLinecap="round"
+                      rotation="-90"
+                      origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+                    />
+                  )}
+                </Svg>
+                {/* Center Content */}
+                <View style={styles.progressInner}>
+                  {hasCompletedToday ? (
+                    <>
+                      <Text style={styles.progressScore}>{todayAverageScore}%</Text>
+                      <Text style={styles.progressLabel}>
+                        {todayQuizCount === 1 ? "1 QUIZ" : `${todayQuizCount} QUIZZES`}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="time-outline" size={28} color={colors.sage} />
+                      <Text style={[styles.progressLabel, { color: colors.sage }]}>TODAY</Text>
+                    </>
+                  )}
                 </View>
               </View>
             </View>
@@ -194,41 +254,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  progressCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 8,
-    borderColor: colors.charcoal,
-    backgroundColor: colors.charcoal,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  progressFill: {
+  progressSvg: {
     position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 8,
-    borderColor: colors.greenGlow,
-    borderRightColor: "transparent",
-    borderBottomColor: "transparent",
-    borderLeftColor: "transparent",
   },
   progressInner: {
     alignItems: "center",
   },
-  progressText: {
-    fontSize: 18,
+  progressScore: {
+    fontSize: 22,
     fontWeight: "bold",
     color: colors.greenGlow,
   },
   progressLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: colors.greenGlow,
     fontWeight: "600",
     letterSpacing: 0.5,
+    marginTop: 2,
   },
   masterySection: {
     marginBottom: 32,

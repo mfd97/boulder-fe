@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,16 +6,100 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
+  Dimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { colors } from '@/constants/colors';
+import { getQuizHistory, createQuiz, QuizHistoryItem } from '@/api/quiz';
 
-export default function QuizScreen() {
+const { width: screenWidth } = Dimensions.get('window');
+const CARD_GAP = 12;
+const CARD_SIZE = (screenWidth - 40 - CARD_GAP) / 2; // 40 = padding (20 * 2)
+
+// Icons for different topics (rotating through them)
+const TOPIC_ICONS: Array<keyof typeof Ionicons.glyphMap> = [
+  'bulb-outline',
+  'code-slash-outline',
+  'flask-outline',
+  'book-outline',
+  'rocket-outline',
+  'cube-outline',
+];
+
+export default function QuizHubScreen() {
+  const router = useRouter();
+
+  // Fetch quiz history
+  const { data: quizHistory, isLoading } = useQuery({
+    queryKey: ['quizHistory'],
+    queryFn: getQuizHistory,
+  });
+
+  // Mutation for creating a new quiz
+  const { mutate: startQuiz, isPending: isGenerating } = useMutation({
+    mutationFn: ({ topic, difficulty }: { topic: string; difficulty: string }) => 
+      createQuiz(topic, difficulty),
+    onSuccess: (data) => {
+      router.push({
+        pathname: "/(protected)/(tabs)/quiz/quizScreen",
+        params: { quizData: JSON.stringify(data) },
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      Alert.alert("Error", "Failed to generate quiz. Please try again.");
+    },
+  });
+
+  // Extract unique recent topics (max 6)
+  const recentTopics = useMemo(() => {
+    if (!quizHistory || quizHistory.length === 0) return [];
+    
+    // Get unique topics with their latest quiz info
+    const topicMap = new Map<string, QuizHistoryItem>();
+    quizHistory.forEach((quiz) => {
+      if (!topicMap.has(quiz.topic)) {
+        topicMap.set(quiz.topic, quiz);
+      }
+    });
+    
+    // Convert to array and take first 6
+    return Array.from(topicMap.values()).slice(0, 6);
+  }, [quizHistory]);
+
+  const handleCreateQuiz = () => {
+    router.push("/(protected)/(tabs)/quiz/CreateQuiz");
+  };
+
+  const handleViewHistory = () => {
+    router.push("/(protected)/(tabs)/bookmarks");
+  };
+
+  const handleTopicPress = (topic: string, difficulty: string) => {
+    if (isGenerating) return;
+    startQuiz({ topic, difficulty });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
       
+      {/* Loading overlay when generating */}
+      {isGenerating && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color={colors.greenGlow} />
+            <Text style={styles.loadingText}>Generating Quiz...</Text>
+            <Text style={styles.loadingHint}>This may take 30-60 seconds</Text>
+          </View>
+        </View>
+      )}
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
@@ -38,7 +122,12 @@ export default function QuizScreen() {
         </View>
 
         {/* Create New Quiz Button */}
-        <TouchableOpacity style={styles.createButton}>
+        <TouchableOpacity 
+          style={styles.createButton}
+          onPress={handleCreateQuiz}
+          activeOpacity={0.7}
+          disabled={isGenerating}
+        >
           <View style={styles.createButtonContent}>
             <View style={styles.createButtonTextContainer}>
               <Text style={styles.createButtonTitle}>Create New Quiz</Text>
@@ -51,56 +140,66 @@ export default function QuizScreen() {
         {/* Recent Learning Section */}
         <View style={styles.recentSection}>
           <View style={styles.recentHeader}>
-            <Text style={styles.recentTitle}>RECENT LEARNING</Text>
-            <TouchableOpacity>
+            <Text style={styles.recentTitle}>RECENT TOPICS</Text>
+            <TouchableOpacity onPress={handleViewHistory}>
               <Text style={styles.viewHistoryLink}>View History</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Quiz Items */}
-          <View style={styles.quizItems}>
-            {/* Neural Networks */}
-            <TouchableOpacity style={styles.quizCard}>
-              <View style={styles.quizCardContent}>
-                <View style={styles.quizIconContainer}>
-                  <Ionicons name="pulse" size={24} color={colors.greenGlow} />
-                </View>
-                <View style={styles.quizInfo}>
-                  <Text style={styles.quizTitle}>Neural Networks</Text>
-                  <Text style={styles.quizDetails}>85% SCORE • 2 days ago</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.offWhite} />
-              </View>
-            </TouchableOpacity>
+          {/* Loading State */}
+          {isLoading && (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="small" color={colors.greenGlow} />
+              <Text style={styles.emptyText}>Loading topics...</Text>
+            </View>
+          )}
 
-            {/* Linear Algebra */}
-            <TouchableOpacity style={styles.quizCard}>
-              <View style={styles.quizCardContent}>
-                <View style={styles.quizIconContainer}>
-                  <Text style={styles.sigmaIcon}>Σ</Text>
-                </View>
-                <View style={styles.quizInfo}>
-                  <Text style={styles.quizTitle}>Linear Algebra</Text>
-                  <Text style={styles.quizDetails}>62% SCORE • Yesterday</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.offWhite} />
-              </View>
-            </TouchableOpacity>
+          {/* Empty State */}
+          {!isLoading && recentTopics.length === 0 && (
+            <View style={styles.emptyState}>
+              <Ionicons name="help-circle-outline" size={32} color={colors.sage} />
+              <Text style={styles.emptyText}>No quizzes yet</Text>
+              <Text style={styles.emptySubtext}>Create your first quiz above!</Text>
+            </View>
+          )}
 
-            {/* SQL Optimization */}
-            <TouchableOpacity style={styles.quizCard}>
-              <View style={styles.quizCardContent}>
-                <View style={styles.quizIconContainer}>
-                  <Ionicons name="layers" size={24} color={colors.greenGlow} />
-                </View>
-                <View style={styles.quizInfo}>
-                  <Text style={styles.quizTitle}>SQL Optimization</Text>
-                  <Text style={styles.quizDetails}>NEW QUIZ • Ready</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.offWhite} />
-              </View>
-            </TouchableOpacity>
-          </View>
+          {/* Topic Grid */}
+          {!isLoading && recentTopics.length > 0 && (
+            <View style={styles.topicGrid}>
+              {recentTopics.map((quiz, index) => (
+                <TouchableOpacity
+                  key={quiz._id}
+                  style={styles.topicCard}
+                  onPress={() => handleTopicPress(quiz.topic, quiz.difficulty)}
+                  activeOpacity={0.7}
+                  disabled={isGenerating}
+                >
+                  <View style={styles.topicIconContainer}>
+                    <Ionicons 
+                      name={TOPIC_ICONS[index % TOPIC_ICONS.length]} 
+                      size={28} 
+                      color={colors.greenGlow} 
+                    />
+                  </View>
+                  <Text style={styles.topicTitle} numberOfLines={2}>
+                    {quiz.topic}
+                  </Text>
+                  <View style={styles.topicMeta}>
+                    <Text style={styles.topicScore}>{quiz.percentage}%</Text>
+                    <View style={styles.topicDifficulty}>
+                      <Text style={styles.topicDifficultyText}>
+                        {quiz.difficulty.toUpperCase()}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.retakeHint}>
+                    <Ionicons name="refresh" size={12} color={colors.sage} />
+                    <Text style={styles.retakeText}>Tap to retake</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -111,6 +210,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.charcoal,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  loadingCard: {
+    backgroundColor: colors.darkGrey,
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.offWhite,
+  },
+  loadingHint: {
+    fontSize: 13,
+    color: colors.sage,
+    fontStyle: 'italic',
   },
   header: {
     paddingHorizontal: 20,
@@ -162,7 +285,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   createButton: {
-    backgroundColor: '#3A3D40', // Light grey for button
+    backgroundColor: '#3A3D40',
     borderRadius: 16,
     padding: 20,
     marginBottom: 32,
@@ -203,23 +326,36 @@ const styles = StyleSheet.create({
   },
   viewHistoryLink: {
     fontSize: 12,
-    color: colors.offWhite,
-    opacity: 0.7,
+    color: colors.greenGlow,
   },
-  quizItems: {
-    gap: 12,
-  },
-  quizCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 16,
-  },
-  quizCardContent: {
-    flexDirection: 'row',
+  emptyState: {
     alignItems: 'center',
-    gap: 16,
+    paddingVertical: 40,
+    gap: 8,
   },
-  quizIconContainer: {
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.offWhite,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: colors.sage,
+  },
+  topicGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: CARD_GAP,
+  },
+  topicCard: {
+    width: CARD_SIZE,
+    height: CARD_SIZE,
+    backgroundColor: colors.darkGrey,
+    borderRadius: 16,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  topicIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 12,
@@ -227,23 +363,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sigmaIcon: {
-    fontSize: 24,
-    color: colors.greenGlow,
-    fontWeight: 'bold',
-  },
-  quizInfo: {
-    flex: 1,
-  },
-  quizTitle: {
-    fontSize: 16,
+  topicTitle: {
+    fontSize: 15,
     fontWeight: '600',
     color: colors.offWhite,
-    marginBottom: 4,
+    lineHeight: 20,
   },
-  quizDetails: {
-    fontSize: 12,
-    color: colors.offWhite,
-    opacity: 0.7,
+  topicMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  topicScore: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.greenGlow,
+  },
+  topicDifficulty: {
+    backgroundColor: colors.charcoal,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  topicDifficultyText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: colors.sage,
+    letterSpacing: 0.5,
+  },
+  retakeHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  retakeText: {
+    fontSize: 11,
+    color: colors.sage,
   },
 });
