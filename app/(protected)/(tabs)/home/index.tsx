@@ -14,7 +14,7 @@ import Svg, { Circle } from "react-native-svg";
 import { colors } from "@/constants/colors";
 import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
-import { getStreak } from "@/api/quiz";
+import { getStreak, getMastery } from "@/api/quiz";
 
 // Progress ring dimensions
 const RING_SIZE = 100;
@@ -22,23 +22,44 @@ const RING_STROKE_WIDTH = 8;
 const RING_RADIUS = (RING_SIZE - RING_STROKE_WIDTH) / 2;
 const RING_CIRCUMFERENCE = RING_RADIUS * 2 * Math.PI;
 
+// Helper to get star count based on difficulty
+function getStarCount(difficulty: string): number {
+  switch (difficulty) {
+    case 'easy': return 1;
+    case 'medium': return 2;
+    case 'hard': return 3;
+    default: return 1;
+  }
+}
+
 export default function HomeScreen() {
   // Fetch streak data
-  const { data: streakData, isLoading, error } = useQuery({
+  const { data: streakData } = useQuery({
     queryKey: ['streak'],
     queryFn: getStreak,
-    refetchOnMount: 'always', // Always refresh when component mounts
-    staleTime: 0, // Consider data stale immediately
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
-  // Debug logging
-  console.log('[HomeScreen] Streak data:', streakData);
-  console.log('[HomeScreen] Loading:', isLoading, 'Error:', error);
+  // Fetch mastery data
+  const { data: masteryData } = useQuery({
+    queryKey: ['mastery'],
+    queryFn: getMastery,
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
 
   const streak = streakData?.streak ?? 0;
   const hasCompletedToday = streakData?.hasCompletedToday ?? false;
   const todayAverageScore = streakData?.todayAverageScore ?? 0;
   const todayQuizCount = streakData?.todayQuizCount ?? 0;
+
+  // Mastery data
+  const hasMastery = masteryData !== null && masteryData !== undefined;
+  const masteryTopic = masteryData?.topic ?? 'No topics yet';
+  const masteryScore = masteryData?.averageScore ?? 0;
+  const masteryDifficulty = masteryData?.difficulty ?? 'easy';
+  const starCount = getStarCount(masteryDifficulty);
 
   return (
     <View style={styles.wrapper}>
@@ -138,26 +159,55 @@ export default function HomeScreen() {
 
             <View style={styles.masteryCard}>
               <Text style={styles.cardLabel}>CURRENT PEAK</Text>
-              <View style={styles.masteryHeader}>
-                <Text style={styles.masterySubject}>Quantum Physics</Text>
-                <View style={styles.starsContainer}>
-                  <Ionicons name="star" size={16} color={colors.greenGlow} />
-                  <Ionicons name="star" size={16} color={colors.greenGlow} />
-                </View>
-              </View>
-              <View style={styles.masteryStats}>
-                <Text style={styles.masteryPercentage}>88%</Text>
-                <View style={styles.masteryInfo}>
-                  <Text style={styles.masteryLevel}>MASTERY LEVEL</Text>
-                  <View style={styles.waveGraph}>
-                    <View style={[styles.waveBar, { height: 8 }]} />
-                    <View style={[styles.waveBar, { height: 12 }]} />
-                    <View style={[styles.waveBar, { height: 6 }]} />
-                    <View style={[styles.waveBar, { height: 10 }]} />
-                    <View style={[styles.waveBar, { height: 14 }]} />
+              {hasMastery ? (
+                <>
+                  <View style={styles.masteryHeader}>
+                    <Text style={styles.masterySubject} numberOfLines={1}>
+                      {masteryTopic}
+                    </Text>
+                    <View style={styles.starsContainer}>
+                      {Array.from({ length: starCount }).map((_, index) => (
+                        <Ionicons 
+                          key={index} 
+                          name="star" 
+                          size={16} 
+                          color={colors.greenGlow} 
+                        />
+                      ))}
+                      {Array.from({ length: 3 - starCount }).map((_, index) => (
+                        <Ionicons 
+                          key={`empty-${index}`} 
+                          name="star-outline" 
+                          size={16} 
+                          color={colors.sage} 
+                        />
+                      ))}
+                    </View>
                   </View>
+                  <View style={styles.masteryStats}>
+                    <Text style={styles.masteryPercentage}>{masteryScore}%</Text>
+                    <View style={styles.masteryInfo}>
+                      <Text style={styles.masteryLevel}>
+                        {masteryDifficulty === 'easy' ? 'BEGINNER' : 
+                         masteryDifficulty === 'medium' ? 'INTERMEDIATE' : 'ADVANCED'}
+                      </Text>
+                      <View style={styles.waveGraph}>
+                        {/* Dynamic wave bars based on score */}
+                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.14) }]} />
+                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.12) }]} />
+                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.10) }]} />
+                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.13) }]} />
+                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.15) }]} />
+                      </View>
+                    </View>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.noMasteryContainer}>
+                  <Ionicons name="trophy-outline" size={32} color={colors.sage} />
+                  <Text style={styles.noMasteryText}>Complete a quiz to see your mastery</Text>
                 </View>
-              </View>
+              )}
             </View>
           </View>
 
@@ -346,6 +396,16 @@ const styles = StyleSheet.create({
     width: 4,
     backgroundColor: colors.greenGlow,
     borderRadius: 2,
+  },
+  noMasteryContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
+    gap: 12,
+  },
+  noMasteryText: {
+    fontSize: 14,
+    color: colors.sage,
+    textAlign: "center",
   },
   leaderboardSection: {
     marginBottom: 24,

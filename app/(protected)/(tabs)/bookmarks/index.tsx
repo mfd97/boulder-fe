@@ -69,7 +69,7 @@ export default function HistoryScreen() {
 
   const handleQuizPress = (quizId: string) => {
     router.push({
-      pathname: "/(protected)/(tabs)/quiz/quizSummary",
+      pathname: "/(protected)/(tabs)/bookmarks/historySummary",
       params: { quizId },
     });
   };

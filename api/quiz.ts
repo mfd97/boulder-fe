@@ -1,6 +1,11 @@
 import { instance } from "./instance";
 
-export async function createQuiz(topic: string, difficulty: string) {
+export interface CreateQuizParams {
+    topic: string;
+    difficulty: string;
+}
+
+export async function createQuiz({ topic, difficulty }: CreateQuizParams) {
     try {
         const response = await instance.post(
             "/quiz",
@@ -100,6 +105,40 @@ export async function getStreak(): Promise<StreakData> {
         return response.data.data;
     } catch (error) {
         console.log("getStreak error:", error);
+        throw error;
+    }
+}
+
+export interface MasteryData {
+    topic: string;
+    averageScore: number;
+    difficulty: 'easy' | 'medium' | 'hard';
+    quizCount: number;
+}
+
+export async function getMastery(): Promise<MasteryData | null> {
+    try {
+        const response = await instance.get("/quiz/mastery");
+        return response.data.data;
+    } catch (error) {
+        console.log("getMastery error:", error);
+        throw error;
+    }
+}
+
+export interface ProfileStats {
+    totalCompletions: number;
+    averageMastery: number;
+    topicsStudied: number;
+    currentStreak: number;
+}
+
+export async function getProfileStats(): Promise<ProfileStats> {
+    try {
+        const response = await instance.get("/quiz/profile-stats");
+        return response.data.data;
+    } catch (error) {
+        console.log("getProfileStats error:", error);
         throw error;
     }
 }

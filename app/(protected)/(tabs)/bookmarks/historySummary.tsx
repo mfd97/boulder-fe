@@ -4,21 +4,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { useMemo } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { colors } from "@/constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
-import ConfettiCannon from "react-native-confetti-cannon";
-import { getQuizById, createQuiz } from "@/api/quiz";
-
-const { width: screenWidth } = Dimensions.get("window");
+import { getQuizById } from "@/api/quiz";
 
 interface Question {
   _id: string;
@@ -38,49 +33,19 @@ interface QuizResult {
   correctCount: number;
 }
 
-export default function QuizSummaryScreen() {
+export default function HistorySummaryScreen() {
   const router = useRouter();
-  const { resultData: resultDataParam, quizId } = useLocalSearchParams<{ 
-    resultData?: string;
-    quizId?: string;
-  }>();
+  const { quizId } = useLocalSearchParams<{ quizId: string }>();
 
-  // Fetch quiz data from API if quizId is provided (from history)
+  // Fetch quiz data from API
   const { data: quizFromApi, isLoading, isError } = useQuery({
     queryKey: ['quiz', quizId],
     queryFn: () => getQuizById(quizId!),
-    enabled: !!quizId && !resultDataParam,
+    enabled: !!quizId,
   });
-
-  // Mutation for creating a new quiz on the same topic
-  const { mutate: startNewQuiz, isPending: isGenerating } = useMutation({
-    mutationFn: createQuiz,
-    onSuccess: (quizData) => {
-      console.log("Quiz created successfully:", quizData);
-      router.replace({
-        pathname: "/(protected)/(tabs)/quiz/quizScreen",
-        params: { quizData: JSON.stringify(quizData) },
-      });
-    },
-    onError: (error: Error) => {
-      console.log("Quiz creation error:", error);
-      Alert.alert("Error", error.message || "Failed to generate quiz. Please try again.");
-    },
-  });
-
-  // Parse result data from params (from fresh quiz submission)
-  const resultFromParams = useMemo<QuizResult | null>(() => {
-    if (!resultDataParam) return null;
-    try {
-      return JSON.parse(resultDataParam);
-    } catch {
-      console.error("Failed to parse result data");
-      return null;
-    }
-  }, [resultDataParam]);
 
   // Convert API data to result format
-  const resultFromApi = useMemo<QuizResult | null>(() => {
+  const result = useMemo<QuizResult | null>(() => {
     if (!quizFromApi) return null;
     return {
       topic: quizFromApi.topic,
@@ -93,14 +58,11 @@ export default function QuizSummaryScreen() {
     };
   }, [quizFromApi]);
 
-  // Use whichever result is available
-  const result = resultFromParams || resultFromApi;
-
-  // Loading state (only when loading from API)
+  // Loading state
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.errorContainer}>
+        <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.greenGlow} />
           <Text style={styles.loadingText}>Loading quiz results...</Text>
         </View>
@@ -112,29 +74,22 @@ export default function QuizSummaryScreen() {
   if (!result || isError) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <View style={styles.errorContainer}>
+        <View style={styles.centerContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.sage} />
           <Text style={styles.errorText}>No result data found</Text>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => router.replace("/(protected)/(tabs)/home")}
+            onPress={() => router.back()}
           >
-            <Text style={styles.actionButtonText}>Go Home</Text>
+            <Text style={styles.actionButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  const { topic, difficulty, questions, answers, correctCount } = result;
+  const { topic, questions, answers, correctCount } = result;
   const percentage = Math.round((correctCount / questions.length) * 100);
-
-  // Handle starting a new session on the same topic
-  const handleStartNewSession = () => {
-    console.log("handleStartNewSession called", { topic, difficulty, isGenerating });
-    if (isGenerating) return;
-    console.log("Starting new quiz with:", { topic, difficulty });
-    startNewQuiz({ topic, difficulty });
-  };
 
   // Circle progress properties
   const size = 160;
@@ -143,36 +98,27 @@ export default function QuizSummaryScreen() {
   const circumference = radius * 2 * Math.PI;
   const progressOffset = circumference - (percentage / 100) * circumference;
 
-  const isPerfectScore = percentage === 100;
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* Confetti for perfect score - using brand colors */}
-      {isPerfectScore && (
-        <ConfettiCannon
-          count={150}
-          origin={{ x: screenWidth / 2, y: -20 }}
-          autoStart={true}
-          fadeOut={true}
-          fallSpeed={2500}
-          explosionSpeed={300}
-          colors={[
-            colors.greenGlow,    // #9FF294 - bright green
-            colors.sage,         // #BDCCB5 - muted sage
-            colors.offWhite,     // #F0EDE8 - cream white
-            "#7ED47A",           // darker green variation
-            "#D4E5D0",           // lighter sage variation
-          ]}
-        />
-      )}
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.offWhite} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Quiz Summary</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Text style={styles.headerLabel}>QUIZ SUMMARY</Text>
+        {/* Topic Title */}
         <Text style={styles.topicTitle}>{topic}</Text>
 
         {/* Circular Progress */}
@@ -204,7 +150,7 @@ export default function QuizSummaryScreen() {
           </Svg>
           <View style={styles.progressTextContainer}>
             <Text style={styles.percentageText}>{percentage}%</Text>
-            <Text style={styles.completedText}>COMPLETED</Text>
+            <Text style={styles.completedText}>SCORE</Text>
           </View>
         </View>
 
@@ -261,35 +207,12 @@ export default function QuizSummaryScreen() {
           })}
         </View>
 
-        {/* Start New Session Button */}
+        {/* Back to History Button */}
         <TouchableOpacity
-          style={[styles.actionButton, isGenerating && styles.actionButtonDisabled]}
-          onPress={handleStartNewSession}
-          disabled={isGenerating}
+          style={styles.backToHistoryButton}
+          onPress={() => router.back()}
         >
-          {isGenerating ? (
-            <View style={styles.generatingContainer}>
-              <ActivityIndicator size="small" color={colors.charcoal} />
-              <Text style={styles.actionButtonText}>  GENERATING...</Text>
-            </View>
-          ) : (
-            <Text style={styles.actionButtonText}>START NEW SESSION</Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Exit Summary Button - goes to history if came from there, otherwise CreateQuiz */}
-        <TouchableOpacity
-          style={[styles.exitButton, isGenerating && styles.exitButtonDisabled]}
-          onPress={() => router.replace(
-            quizId 
-              ? "/(protected)/(tabs)/bookmarks" 
-              : "/(protected)/(tabs)/quiz/CreateQuiz"
-          )}
-          disabled={isGenerating}
-        >
-          <Text style={styles.exitButtonText}>
-            {quizId ? "BACK TO HISTORY" : "EXIT SUMMARY"}
-          </Text>
+          <Text style={styles.backToHistoryText}>BACK TO HISTORY</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -301,6 +224,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.charcoal,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.darkGrey,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    color: colors.offWhite,
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  headerSpacer: {
+    width: 40,
+  },
   scrollView: {
     flex: 1,
   },
@@ -308,7 +254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  errorContainer: {
+  centerContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -317,6 +263,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.offWhite,
     fontSize: 18,
+    marginTop: 16,
     marginBottom: 20,
   },
   loadingText: {
@@ -324,18 +271,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
   },
-  headerLabel: {
-    color: colors.sage,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.5,
-    marginTop: 20,
-    marginBottom: 8,
-  },
   topicTitle: {
     color: colors.offWhite,
     fontSize: 28,
     fontWeight: "700",
+    marginTop: 20,
     marginBottom: 32,
   },
   progressContainer: {
@@ -453,12 +393,9 @@ const styles = StyleSheet.create({
   actionButton: {
     backgroundColor: colors.sage,
     paddingVertical: 16,
+    paddingHorizontal: 32,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 8,
-  },
-  actionButtonDisabled: {
-    opacity: 0.7,
   },
   actionButtonText: {
     color: colors.charcoal,
@@ -466,24 +403,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 1,
   },
-  generatingContainer: {
-    flexDirection: "row",
+  backToHistoryButton: {
+    backgroundColor: colors.sage,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 8,
   },
-  exitButton: {
-    marginTop: 12,
-    marginBottom: 20,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  exitButtonDisabled: {
-    opacity: 0.5,
-  },
-  exitButtonText: {
-    color: colors.sage,
+  backToHistoryText: {
+    color: colors.charcoal,
     fontSize: 14,
-    fontWeight: "500",
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    letterSpacing: 1,
   },
 });

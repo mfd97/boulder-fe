@@ -42,8 +42,7 @@ export default function QuizHubScreen() {
 
   // Mutation for creating a new quiz
   const { mutate: startQuiz, isPending: isGenerating } = useMutation({
-    mutationFn: ({ topic, difficulty }: { topic: string; difficulty: string }) => 
-      createQuiz(topic, difficulty),
+    mutationFn: createQuiz,
     onSuccess: (data) => {
       router.push({
         pathname: "/(protected)/(tabs)/quiz/quizScreen",
