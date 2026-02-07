@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
+  Text,
   TextInput,
   StyleSheet,
   Animated,
@@ -10,12 +11,18 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants/colors";
 
+const ERROR_COLOR = "#FF6B6B";
+const SUCCESS_COLOR = colors.greenGlow;
+
 interface InputProps extends Omit<TextInputProps, "placeholder"> {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
   rightElement?: React.ReactNode;
+  error?: string;
+  isValid?: boolean;
+  showValidation?: boolean;
 }
 
 export default function Input({
@@ -24,6 +31,9 @@ export default function Input({
   onChangeText,
   secureTextEntry = false,
   rightElement,
+  error,
+  isValid,
+  showValidation = false,
   ...rest
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -31,6 +41,8 @@ export default function Input({
   const animatedValue = useRef(new Animated.Value(value ? 1 : 0)).current;
 
   const hasValue = value.length > 0;
+  const hasError = !!error;
+  const showSuccess = showValidation && isValid && hasValue && !hasError;
 
   useEffect(() => {
     Animated.timing(animatedValue, {
@@ -39,6 +51,21 @@ export default function Input({
       useNativeDriver: false,
     }).start();
   }, [isFocused, hasValue, animatedValue]);
+
+  // Determine border color based on state
+  const getBorderColor = () => {
+    if (hasError) return ERROR_COLOR;
+    if (showSuccess) return SUCCESS_COLOR;
+    if (isFocused) return colors.greenGlow;
+    return "transparent";
+  };
+
+  // Determine label color based on state
+  const getLabelColor = () => {
+    if (hasError) return ERROR_COLOR;
+    if (showSuccess) return SUCCESS_COLOR;
+    return colors.greenGlow;
+  };
 
   const labelStyle = {
     top: animatedValue.interpolate({
@@ -51,7 +78,7 @@ export default function Input({
     }),
     color: animatedValue.interpolate({
       inputRange: [0, 1],
-      outputRange: [colors.sage, colors.greenGlow],
+      outputRange: [colors.sage, getLabelColor()],
     }),
   };
 
@@ -62,12 +89,16 @@ export default function Input({
     setIsPasswordVisible(!isPasswordVisible);
   };
 
+  // Determine if we need extra padding for validation icon
+  const hasValidationIcon = showValidation && hasValue;
+  const hasRightIcon = secureTextEntry || hasValidationIcon;
+
   return (
     <View style={styles.container}>
       <View
         style={[
           styles.inputWrapper,
-          isFocused && styles.inputWrapperFocused,
+          { borderColor: getBorderColor() },
         ]}
       >
         <Animated.Text style={[styles.label, labelStyle]}>
@@ -77,7 +108,7 @@ export default function Input({
         <TextInput
           style={[
             styles.input,
-            secureTextEntry && styles.inputWithIcon,
+            hasRightIcon && styles.inputWithIcon,
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -88,6 +119,18 @@ export default function Input({
           {...rest}
         />
 
+        {/* Validation Icon (for non-password fields) */}
+        {showValidation && hasValue && !secureTextEntry && (
+          <View style={styles.validationIcon}>
+            <Ionicons
+              name={hasError ? "close-circle" : "checkmark-circle"}
+              size={20}
+              color={hasError ? ERROR_COLOR : SUCCESS_COLOR}
+            />
+          </View>
+        )}
+
+        {/* Password Toggle Icon */}
         {secureTextEntry && (
           <TouchableOpacity
             style={styles.eyeIcon}
@@ -104,6 +147,14 @@ export default function Input({
 
         {rightElement}
       </View>
+
+      {/* Error Message */}
+      {hasError && (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={14} color={ERROR_COLOR} />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -121,9 +172,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
     minHeight: 56,
-  },
-  inputWrapperFocused: {
-    borderColor: colors.greenGlow,
   },
   label: {
     position: "absolute",
@@ -148,5 +196,22 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 16,
     padding: 4,
+  },
+  validationIcon: {
+    position: "absolute",
+    right: 16,
+    padding: 4,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+  errorText: {
+    color: ERROR_COLOR,
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: "500",
   },
 });

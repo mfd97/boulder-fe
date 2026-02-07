@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,43 +7,89 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/constants/colors';
 import { router } from 'expo-router';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { login } from '@/api/auth';
 import { AuthContext } from '@/context/AuthContext';
 import { setItemAsync } from 'expo-secure-store';
 import Input from './components/Input';
+import type { AxiosError } from 'axios';
+
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
-  const [Email, setEmail] = useState("")
-  const [Password, setPassword] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loginError, setLoginError] = useState<string | null>(null)
+  const [emailTouched, setEmailTouched] = useState(false)
   const { setIsAuth} = useContext(AuthContext)
-  
-  // console.log(Email, Password)
+  const queryClient = useQueryClient()
 
-  const {mutate} = useMutation({
+  // Validation helpers
+  const isEmailValid = EMAIL_REGEX.test(email);
+  const emailError = emailTouched && email.length > 0 && !isEmailValid 
+    ? "Please enter a valid email address" 
+    : undefined;
+
+  const handleEmailChange = useCallback((text: string) => {
+    setEmail(text);
+    setEmailTouched(true);
+    // Clear login error when user starts typing
+    if (loginError) setLoginError(null);
+  }, [loginError]);
+
+  const handlePasswordChange = useCallback((text: string) => {
+    setPassword(text);
+    // Clear login error when user starts typing
+    if (loginError) setLoginError(null);
+  }, [loginError]);
+
+  const {mutate, isPending} = useMutation({
     mutationKey:["login"],
-    mutationFn: ()=>login({email:Email, password:Password }),
-    onSuccess: async (data, variables, onMutateResult, context) =>{
-      console.log(data)
+    mutationFn: ()=>login({email:email, password:password }),
+    onSuccess: async (data) =>{
       // 1. Store the token
       await setItemAsync("token", data.token)
-      // 2. Set user to use
+      
+      // 2. Clear all cached data from previous user
+      queryClient.clear()
+      
+      // 3. Set user to use
       setIsAuth(true)     
 
-      //3. navigate to home page
+      // 4. navigate to home page
       router.replace("/(protected)/(tabs)/home")
     },
-    onError(err){
-      console.log(err)
+    onError(err: AxiosError<{ error?: string }>){
+      // Extract error message from response or use generic message
+      const errorMessage = 
+        err?.response?.data?.error || 
+        err?.message || 
+        'Invalid email or password. Please try again.';
+      setLoginError(errorMessage);
     }
   })
 
   const handleLogin = () => {
-    console.log("here")
+    // Clear previous errors
+    setLoginError(null);
+    
+    // Validate before submitting
+    if (!email.trim() || !password.trim()) {
+      setLoginError('Please enter both email and password.');
+      return;
+    }
+    
+    if (!isEmailValid) {
+      setLoginError('Please enter a valid email address.');
+      return;
+    }
+    
     mutate()
   } 
 
@@ -70,14 +116,25 @@ export default function LoginScreen() {
 
           {/* Form */}
           <View style={styles.form}>
+            {/* Login Error Banner */}
+            {loginError && (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorBannerText}>{loginError}</Text>
+              </View>
+            )}
+
             {/* Email Input */}
             <Input
               label="Email"
-              value={Email}
-              onChangeText={setEmail}
+              value={email}
+              onChangeText={handleEmailChange}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
+              error={emailError}
+              isValid={isEmailValid}
+              showValidation={emailTouched && email.length > 0}
+              editable={!isPending}
             />
 
             {/* Password Input */}
@@ -87,16 +144,28 @@ export default function LoginScreen() {
               </TouchableOpacity>
               <Input
                 label="Password"
-                value={Password}
-                onChangeText={setPassword}
+                value={password}
+                onChangeText={handlePasswordChange}
                 secureTextEntry
                 autoComplete="password"
+                editable={!isPending}
               />
             </View>
 
             {/* Login Button */}
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>LOGIN</Text>
+            <TouchableOpacity 
+              style={[
+                styles.loginButton,
+                isPending && styles.loginButtonDisabled
+              ]} 
+              onPress={handleLogin}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <ActivityIndicator color={colors.charcoal} size="small" />
+              ) : (
+                <Text style={styles.loginButtonText}>LOGIN</Text>
+              )}
             </TouchableOpacity>
 
             {/* Sign Up Link */}
@@ -178,12 +247,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 24,
+    minHeight: 52,
+    justifyContent: 'center',
+  },
+  loginButtonDisabled: {
+    opacity: 0.7,
   },
   loginButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.charcoal,
     letterSpacing: 1,
+  },
+  errorBanner: {
+    backgroundColor: 'rgba(255, 107, 107, 0.15)',
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorBannerText: {
+    color: '#FF6B6B',
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   signUpContainer: {
     flexDirection: 'row',

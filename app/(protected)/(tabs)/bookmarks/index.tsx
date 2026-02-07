@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { getQuizHistory, QuizHistoryItem } from '@/api/quiz';
 import { HistoryItemSkeleton } from '@/components/Skeleton';
+import EmptyState from '@/components/EmptyState';
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -130,13 +131,13 @@ export default function HistoryScreen() {
 
         {/* Empty State */}
         {!isLoading && !isError && quizzes?.length === 0 && (
-          <View style={styles.centerContainer}>
-            <Ionicons name="time-outline" size={48} color={colors.sage} />
-            <Text style={styles.emptyText}>No quizzes yet</Text>
-            <Text style={styles.emptySubtext}>
-              Complete a quiz to see it here
-            </Text>
-          </View>
+          <EmptyState
+            illustration="history"
+            title="Your Journey Awaits"
+            subtitle="Complete your first quiz to start tracking your learning progress"
+            actionLabel="Take a Quiz"
+            onAction={() => router.push('/(protected)/(tabs)/quiz')}
+          />
         )}
 
         {/* History Cards */}

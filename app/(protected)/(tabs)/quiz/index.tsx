@@ -17,6 +17,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { colors } from '@/constants/colors';
 import { getQuizHistory, createQuiz, QuizHistoryItem } from '@/api/quiz';
 import QuizLoadingOverlay from '@/components/QuizLoadingOverlay';
+import EmptyState from '@/components/EmptyState';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_GAP = 12;
@@ -152,11 +153,13 @@ export default function QuizHubScreen() {
 
           {/* Empty State */}
           {!isLoading && recentTopics.length === 0 && (
-            <View style={styles.emptyState}>
-              <Ionicons name="help-circle-outline" size={32} color={colors.sage} />
-              <Text style={styles.emptyText}>No quizzes yet</Text>
-              <Text style={styles.emptySubtext}>Create your first quiz above!</Text>
-            </View>
+            <EmptyState
+              illustration="rocket"
+              title="Ready to Learn?"
+              subtitle="Pick any topic and challenge yourself with AI-generated questions"
+              actionLabel="Create Your First Quiz"
+              onAction={() => router.push('/(protected)/(tabs)/quiz/CreateQuiz')}
+            />
           )}
 
           {/* Topic Grid */}

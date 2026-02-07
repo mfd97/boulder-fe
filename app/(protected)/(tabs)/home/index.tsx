@@ -16,6 +16,7 @@ import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
 import { getStreak, getMastery } from "@/api/quiz";
 import { StreakSkeleton, MasterySkeleton } from "@/components/Skeleton";
+import EmptyState from "@/components/EmptyState";
 
 // Progress ring dimensions
 const RING_SIZE = 100;
@@ -33,7 +34,7 @@ export default function HomeScreen() {
   });
 
   // Fetch mastery data
-  const { data: masteryData, isLoading: isMasteryLoading } = useQuery({
+  const { data: masteryData, isLoading: isMasteryLoading, error: masteryError } = useQuery({
     queryKey: ['mastery'],
     queryFn: getMastery,
     refetchOnMount: 'always',
@@ -42,8 +43,9 @@ export default function HomeScreen() {
 
   // Debug logging
   console.log('[HomeScreen] Streak data:', streakData);
+  console.log('[HomeScreen] Streak error:', error);
   console.log('[HomeScreen] Mastery data:', masteryData);
-  console.log('[HomeScreen] Loading:', isLoading, 'Error:', error);
+  console.log('[HomeScreen] Mastery error:', masteryError);
 
   const streak = streakData?.streak ?? 0;
   const hasCompletedToday = streakData?.hasCompletedToday ?? false;
@@ -74,8 +76,10 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Ionicons name="triangle" size={24} color={colors.offWhite} />
-            <Text style={styles.logoText}>Boulder</Text>
+            <View style={styles.logoIcon}>
+              <Text style={styles.logoText}>B</Text>
+            </View>
+            <Text style={styles.brandText}>BOULDER</Text>
           </View>
           <TouchableOpacity>
             <Ionicons
@@ -157,7 +161,7 @@ export default function HomeScreen() {
           {/* Mastery Tracker Section */}
           {isMasteryLoading ? (
             <MasterySkeleton />
-          ) : (
+          ) : masteryData?.topic ? (
             <View style={styles.masterySection}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Mastery Tracker</Text>
@@ -191,6 +195,26 @@ export default function HomeScreen() {
                     </View>
                   </View>
                 </View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.masterySection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Mastery Tracker</Text>
+                <Ionicons
+                  name="bar-chart-outline"
+                  size={20}
+                  color={colors.offWhite}
+                />
+              </View>
+              <View style={styles.masteryEmptyCard}>
+                <EmptyState
+                  illustration="trophy"
+                  title="Build Your Mastery"
+                  subtitle="Complete quizzes to discover your strongest topics"
+                  actionLabel="Start Learning"
+                  onAction={() => router.push('/(protected)/(tabs)/quiz')}
+                />
               </View>
             </View>
           )}
@@ -240,10 +264,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  logoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.greenGlow,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   logoText: {
-    fontSize: 24,
+    fontSize: 20,
+    fontWeight: "bold",
+    color: colors.charcoal,
+  },
+  brandText: {
+    fontSize: 18,
     fontWeight: "bold",
     color: colors.offWhite,
+    letterSpacing: 1,
   },
   scrollView: {
     flex: 1,
@@ -324,6 +362,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.darkGrey,
     borderRadius: 16,
     padding: 20,
+  },
+  masteryEmptyCard: {
+    backgroundColor: colors.darkGrey,
+    borderRadius: 16,
+    paddingVertical: 8,
   },
   cardLabel: {
     fontSize: 10,
