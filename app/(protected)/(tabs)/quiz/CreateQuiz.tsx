@@ -6,15 +6,17 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   Modal,
   FlatList,
+  StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants/colors";
 import { createQuiz } from "@/api/quiz";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
+import QuizLoadingOverlay from "@/components/QuizLoadingOverlay";
 
 // Difficulty options with display labels and API values
 const DIFFICULTY_OPTIONS = [
@@ -65,10 +67,29 @@ export default function StartQuizScreen() {
 
   // 4. JSX
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Start a New Quiz</Text>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <StatusBar barStyle="light-content" />
+      
+      {/* Quiz Loading Overlay */}
+      <QuizLoadingOverlay topic={topic} visible={isPending} />
+      
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => router.back()}
+          disabled={isPending}
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.offWhite} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>New Quiz</Text>
+        <View style={styles.headerSpacer} />
+      </View>
 
-      <Text style={styles.subtitle}>What are you learning today?</Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>Start a New Quiz</Text>
+
+        <Text style={styles.subtitle}>What are you learning today?</Text>
 
       <TextInput
         style={styles.input}
@@ -136,27 +157,15 @@ export default function StartQuizScreen() {
       </Modal>
 
       <TouchableOpacity
-        style={[styles.button, isPending && styles.buttonDisabled]}
+        style={styles.button}
         onPress={handleSubmit}
         accessibilityLabel="Start quiz button"
         disabled={isPending}
       >
-        {isPending ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={colors.charcoal} />
-            <Text style={styles.buttonText}>  Generating...</Text>
-          </View>
-        ) : (
-          <Text style={styles.buttonText}>Start Quiz</Text>
-        )}
+        <Text style={styles.buttonText}>Start Quiz</Text>
       </TouchableOpacity>
-
-      {isPending && (
-        <Text style={styles.loadingHint}>
-          AI is creating your quiz. This may take 30-60 seconds...
-        </Text>
-      )}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -164,6 +173,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.charcoal,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.darkGrey,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: colors.offWhite,
+  },
+  headerSpacer: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
     padding: 16,
     justifyContent: "center",
   },
@@ -210,25 +245,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
   buttonText: {
     color: colors.charcoal,
     fontSize: 16,
     fontWeight: "600",
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingHint: {
-    marginTop: 12,
-    color: colors.sage,
-    fontSize: 13,
-    textAlign: "center",
-    fontStyle: "italic",
   },
   // Modal styles
   modalOverlay: {

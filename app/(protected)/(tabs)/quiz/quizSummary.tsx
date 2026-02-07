@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import ConfettiCannon from "react-native-confetti-cannon";
 import { getQuizById, createQuiz } from "@/api/quiz";
+import QuizLoadingOverlay from "@/components/QuizLoadingOverlay";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -147,7 +148,10 @@ export default function QuizSummaryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* Confetti for perfect score - using brand colors */}
+      {/* Quiz Loading Overlay */}
+      <QuizLoadingOverlay topic={topic} visible={isGenerating} />
+
+      {/* Confetti for perfect score */}
       {isPerfectScore && (
         <ConfettiCannon
           count={150}
@@ -157,11 +161,11 @@ export default function QuizSummaryScreen() {
           fallSpeed={2500}
           explosionSpeed={300}
           colors={[
-            colors.greenGlow,    // #9FF294 - bright green
-            colors.sage,         // #BDCCB5 - muted sage
-            colors.offWhite,     // #F0EDE8 - cream white
-            "#7ED47A",           // darker green variation
-            "#D4E5D0",           // lighter sage variation
+            colors.greenGlow,
+            colors.sage,
+            colors.offWhite,
+            "#7ED47A",
+            "#D4E5D0",
           ]}
         />
       )}
@@ -263,29 +267,21 @@ export default function QuizSummaryScreen() {
 
         {/* Start New Session Button */}
         <TouchableOpacity
-          style={[styles.actionButton, isGenerating && styles.actionButtonDisabled]}
+          style={styles.actionButton}
           onPress={handleStartNewSession}
           disabled={isGenerating}
         >
-          {isGenerating ? (
-            <View style={styles.generatingContainer}>
-              <ActivityIndicator size="small" color={colors.charcoal} />
-              <Text style={styles.actionButtonText}>  GENERATING...</Text>
-            </View>
-          ) : (
-            <Text style={styles.actionButtonText}>START NEW SESSION</Text>
-          )}
+          <Text style={styles.actionButtonText}>START NEW SESSION</Text>
         </TouchableOpacity>
 
-        {/* Exit Summary Button - goes to history if came from there, otherwise CreateQuiz */}
+        {/* Exit Summary Button - goes to history if came from there, otherwise main quiz tab */}
         <TouchableOpacity
-          style={[styles.exitButton, isGenerating && styles.exitButtonDisabled]}
+          style={styles.exitButton}
           onPress={() => router.replace(
             quizId 
               ? "/(protected)/(tabs)/bookmarks" 
-              : "/(protected)/(tabs)/quiz/CreateQuiz"
+              : "/(protected)/(tabs)/quiz"
           )}
-          disabled={isGenerating}
         >
           <Text style={styles.exitButtonText}>
             {quizId ? "BACK TO HISTORY" : "EXIT SUMMARY"}

@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { colors } from '@/constants/colors';
 import { getQuizHistory, QuizHistoryItem } from '@/api/quiz';
+import { HistoryItemSkeleton } from '@/components/Skeleton';
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -106,11 +106,14 @@ export default function HistoryScreen() {
           <Text style={styles.subtitle}>Your completed quizzes</Text>
         </View>
 
-        {/* Loading State */}
+        {/* Loading State with Skeletons */}
         {isLoading && (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={colors.greenGlow} />
-            <Text style={styles.loadingText}>Loading history...</Text>
+          <View style={styles.historyList}>
+            <HistoryItemSkeleton />
+            <HistoryItemSkeleton />
+            <HistoryItemSkeleton />
+            <HistoryItemSkeleton />
+            <HistoryItemSkeleton />
           </View>
         )}
 
@@ -248,11 +251,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: colors.sage,
-    marginTop: 12,
   },
   emptyText: {
     fontSize: 18,

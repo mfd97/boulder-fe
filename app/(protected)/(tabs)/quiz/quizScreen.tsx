@@ -103,8 +103,6 @@ export default function QuizScreen() {
       // Invalidate queries so they refetch with new data
       queryClient.invalidateQueries({ queryKey: ['streak'] });
       queryClient.invalidateQueries({ queryKey: ['quizHistory'] });
-      queryClient.invalidateQueries({ queryKey: ['mastery'] });
-      queryClient.invalidateQueries({ queryKey: ['profileStats'] });
     } catch (error) {
       console.log("Failed to save quiz result:", error);
       // Continue to show summary even if save fails

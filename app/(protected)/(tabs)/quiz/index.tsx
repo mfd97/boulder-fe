@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { colors } from '@/constants/colors';
 import { getQuizHistory, createQuiz, QuizHistoryItem } from '@/api/quiz';
+import QuizLoadingOverlay from '@/components/QuizLoadingOverlay';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_GAP = 12;
@@ -33,6 +34,7 @@ const TOPIC_ICONS: Array<keyof typeof Ionicons.glyphMap> = [
 
 export default function QuizHubScreen() {
   const router = useRouter();
+  const [generatingTopic, setGeneratingTopic] = useState('');
 
   // Fetch quiz history
   const { data: quizHistory, isLoading } = useQuery({
@@ -44,12 +46,14 @@ export default function QuizHubScreen() {
   const { mutate: startQuiz, isPending: isGenerating } = useMutation({
     mutationFn: createQuiz,
     onSuccess: (data) => {
+      setGeneratingTopic('');
       router.push({
         pathname: "/(protected)/(tabs)/quiz/quizScreen",
         params: { quizData: JSON.stringify(data) },
       });
     },
     onError: (error) => {
+      setGeneratingTopic('');
       console.error(error);
       Alert.alert("Error", "Failed to generate quiz. Please try again.");
     },
@@ -81,6 +85,7 @@ export default function QuizHubScreen() {
 
   const handleTopicPress = (topic: string, difficulty: string) => {
     if (isGenerating) return;
+    setGeneratingTopic(topic);
     startQuiz({ topic, difficulty });
   };
 
@@ -88,16 +93,8 @@ export default function QuizHubScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
       
-      {/* Loading overlay when generating */}
-      {isGenerating && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingCard}>
-            <ActivityIndicator size="large" color={colors.greenGlow} />
-            <Text style={styles.loadingText}>Generating Quiz...</Text>
-            <Text style={styles.loadingHint}>This may take 30-60 seconds</Text>
-          </View>
-        </View>
-      )}
+      {/* Quiz Loading Overlay */}
+      <QuizLoadingOverlay topic={generatingTopic} visible={isGenerating} />
 
       {/* Header */}
       <View style={styles.header}>
@@ -209,30 +206,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.charcoal,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  loadingCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 32,
-    alignItems: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  loadingHint: {
-    fontSize: 13,
-    color: colors.sage,
-    fontStyle: 'italic',
   },
   header: {
     paddingHorizontal: 20,

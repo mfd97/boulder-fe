@@ -15,6 +15,7 @@ import { colors } from "@/constants/colors";
 import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
 import { getStreak, getMastery } from "@/api/quiz";
+import { StreakSkeleton, MasterySkeleton } from "@/components/Skeleton";
 
 // Progress ring dimensions
 const RING_SIZE = 100;
@@ -22,32 +23,27 @@ const RING_STROKE_WIDTH = 8;
 const RING_RADIUS = (RING_SIZE - RING_STROKE_WIDTH) / 2;
 const RING_CIRCUMFERENCE = RING_RADIUS * 2 * Math.PI;
 
-// Helper to get star count based on difficulty
-function getStarCount(difficulty: string): number {
-  switch (difficulty) {
-    case 'easy': return 1;
-    case 'medium': return 2;
-    case 'hard': return 3;
-    default: return 1;
-  }
-}
-
 export default function HomeScreen() {
   // Fetch streak data
-  const { data: streakData } = useQuery({
+  const { data: streakData, isLoading, error } = useQuery({
     queryKey: ['streak'],
     queryFn: getStreak,
-    refetchOnMount: 'always',
-    staleTime: 0,
+    refetchOnMount: 'always', // Always refresh when component mounts
+    staleTime: 0, // Consider data stale immediately
   });
 
   // Fetch mastery data
-  const { data: masteryData } = useQuery({
+  const { data: masteryData, isLoading: isMasteryLoading } = useQuery({
     queryKey: ['mastery'],
     queryFn: getMastery,
     refetchOnMount: 'always',
     staleTime: 0,
   });
+
+  // Debug logging
+  console.log('[HomeScreen] Streak data:', streakData);
+  console.log('[HomeScreen] Mastery data:', masteryData);
+  console.log('[HomeScreen] Loading:', isLoading, 'Error:', error);
 
   const streak = streakData?.streak ?? 0;
   const hasCompletedToday = streakData?.hasCompletedToday ?? false;
@@ -55,10 +51,18 @@ export default function HomeScreen() {
   const todayQuizCount = streakData?.todayQuizCount ?? 0;
 
   // Mastery data
-  const hasMastery = masteryData !== null && masteryData !== undefined;
-  const masteryTopic = masteryData?.topic ?? 'No topics yet';
+  const masteryTopic = masteryData?.topic ?? 'No data yet';
   const masteryScore = masteryData?.averageScore ?? 0;
   const masteryDifficulty = masteryData?.difficulty ?? 'easy';
+
+  // Get star count based on difficulty (easy = 1, medium = 2, hard = 3)
+  const getStarCount = (difficulty: string): number => {
+    switch (difficulty.toLowerCase()) {
+      case 'hard': return 3;
+      case 'medium': return 2;
+      default: return 1;
+    }
+  };
   const starCount = getStarCount(masteryDifficulty);
 
   return (
@@ -90,126 +94,106 @@ export default function HomeScreen() {
           {/* Streak Section */}
           <View style={styles.streakSection}>
             <Text style={styles.sectionLabel}>STREAK</Text>
-            <View style={styles.streakRow}>
-              <View style={styles.streakLeft}>
-                <Text style={styles.streakNumber}>{streak}</Text>
-                <Text style={styles.streakSubtext}>
-                  {streak === 1 ? "Day consistency" : "Days consistency"}
-                </Text>
-              </View>
-              <View style={styles.progressCircleContainer}>
-                {/* SVG Progress Ring */}
-                <Svg width={RING_SIZE} height={RING_SIZE} style={styles.progressSvg}>
-                  {/* Background Circle */}
-                  <Circle
-                    cx={RING_SIZE / 2}
-                    cy={RING_SIZE / 2}
-                    r={RING_RADIUS}
-                    stroke={colors.darkGrey}
-                    strokeWidth={RING_STROKE_WIDTH}
-                    fill="transparent"
-                  />
-                  {/* Progress Circle - only show when there's a score */}
-                  {hasCompletedToday && (
+            {isLoading ? (
+              <StreakSkeleton />
+            ) : (
+              <View style={styles.streakRow}>
+                <View style={styles.streakLeft}>
+                  <Text style={styles.streakNumber}>{streak}</Text>
+                  <Text style={styles.streakSubtext}>
+                    {streak === 1 ? "Day consistency" : "Days consistency"}
+                  </Text>
+                </View>
+                <View style={styles.progressCircleContainer}>
+                  {/* SVG Progress Ring */}
+                  <Svg width={RING_SIZE} height={RING_SIZE} style={styles.progressSvg}>
+                    {/* Background Circle */}
                     <Circle
                       cx={RING_SIZE / 2}
                       cy={RING_SIZE / 2}
                       r={RING_RADIUS}
-                      stroke={colors.greenGlow}
+                      stroke={colors.darkGrey}
                       strokeWidth={RING_STROKE_WIDTH}
                       fill="transparent"
-                      strokeDasharray={RING_CIRCUMFERENCE}
-                      strokeDashoffset={RING_CIRCUMFERENCE - (todayAverageScore / 100) * RING_CIRCUMFERENCE}
-                      strokeLinecap="round"
-                      rotation="-90"
-                      origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
                     />
-                  )}
-                </Svg>
-                {/* Center Content */}
-                <View style={styles.progressInner}>
-                  {hasCompletedToday ? (
-                    <>
-                      <Text style={styles.progressScore}>{todayAverageScore}%</Text>
-                      <Text style={styles.progressLabel}>
-                        {todayQuizCount === 1 ? "1 QUIZ" : `${todayQuizCount} QUIZZES`}
-                      </Text>
-                    </>
-                  ) : (
-                    <>
-                      <Ionicons name="time-outline" size={28} color={colors.sage} />
-                      <Text style={[styles.progressLabel, { color: colors.sage }]}>TODAY</Text>
-                    </>
-                  )}
+                    {/* Progress Circle - only show when there's a score */}
+                    {hasCompletedToday && (
+                      <Circle
+                        cx={RING_SIZE / 2}
+                        cy={RING_SIZE / 2}
+                        r={RING_RADIUS}
+                        stroke={colors.greenGlow}
+                        strokeWidth={RING_STROKE_WIDTH}
+                        fill="transparent"
+                        strokeDasharray={RING_CIRCUMFERENCE}
+                        strokeDashoffset={RING_CIRCUMFERENCE - (todayAverageScore / 100) * RING_CIRCUMFERENCE}
+                        strokeLinecap="round"
+                        rotation="-90"
+                        origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
+                      />
+                    )}
+                  </Svg>
+                  {/* Center Content */}
+                  <View style={styles.progressInner}>
+                    {hasCompletedToday ? (
+                      <>
+                        <Text style={styles.progressScore}>{todayAverageScore}%</Text>
+                        <Text style={styles.progressLabel}>
+                          {todayQuizCount === 1 ? "1 QUIZ" : `${todayQuizCount} QUIZZES`}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons name="time-outline" size={28} color={colors.sage} />
+                        <Text style={[styles.progressLabel, { color: colors.sage }]}>TODAY</Text>
+                      </>
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
+            )}
           </View>
 
           {/* Mastery Tracker Section */}
-          <View style={styles.masterySection}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Mastery Tracker</Text>
-              <Ionicons
-                name="bar-chart-outline"
-                size={20}
-                color={colors.offWhite}
-              />
-            </View>
+          {isMasteryLoading ? (
+            <MasterySkeleton />
+          ) : (
+            <View style={styles.masterySection}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Mastery Tracker</Text>
+                <Ionicons
+                  name="bar-chart-outline"
+                  size={20}
+                  color={colors.offWhite}
+                />
+              </View>
 
-            <View style={styles.masteryCard}>
-              <Text style={styles.cardLabel}>CURRENT PEAK</Text>
-              {hasMastery ? (
-                <>
-                  <View style={styles.masteryHeader}>
-                    <Text style={styles.masterySubject} numberOfLines={1}>
-                      {masteryTopic}
-                    </Text>
-                    <View style={styles.starsContainer}>
-                      {Array.from({ length: starCount }).map((_, index) => (
-                        <Ionicons 
-                          key={index} 
-                          name="star" 
-                          size={16} 
-                          color={colors.greenGlow} 
-                        />
-                      ))}
-                      {Array.from({ length: 3 - starCount }).map((_, index) => (
-                        <Ionicons 
-                          key={`empty-${index}`} 
-                          name="star-outline" 
-                          size={16} 
-                          color={colors.sage} 
-                        />
-                      ))}
-                    </View>
+              <View style={styles.masteryCard}>
+                <Text style={styles.cardLabel}>CURRENT PEAK</Text>
+                <View style={styles.masteryHeader}>
+                  <Text style={styles.masterySubject}>{masteryTopic}</Text>
+                  <View style={styles.starsContainer}>
+                    {Array.from({ length: starCount }).map((_, index) => (
+                      <Ionicons key={index} name="star" size={16} color={colors.greenGlow} />
+                    ))}
                   </View>
-                  <View style={styles.masteryStats}>
-                    <Text style={styles.masteryPercentage}>{masteryScore}%</Text>
-                    <View style={styles.masteryInfo}>
-                      <Text style={styles.masteryLevel}>
-                        {masteryDifficulty === 'easy' ? 'BEGINNER' : 
-                         masteryDifficulty === 'medium' ? 'INTERMEDIATE' : 'ADVANCED'}
-                      </Text>
-                      <View style={styles.waveGraph}>
-                        {/* Dynamic wave bars based on score */}
-                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.14) }]} />
-                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.12) }]} />
-                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.10) }]} />
-                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.13) }]} />
-                        <View style={[styles.waveBar, { height: Math.max(4, masteryScore * 0.15) }]} />
-                      </View>
-                    </View>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.noMasteryContainer}>
-                  <Ionicons name="trophy-outline" size={32} color={colors.sage} />
-                  <Text style={styles.noMasteryText}>Complete a quiz to see your mastery</Text>
                 </View>
-              )}
+                <View style={styles.masteryStats}>
+                  <Text style={styles.masteryPercentage}>{masteryScore}%</Text>
+                  <View style={styles.masteryInfo}>
+                    <Text style={styles.masteryLevel}>MASTERY LEVEL</Text>
+                    <View style={styles.waveGraph}>
+                      <View style={[styles.waveBar, { height: 8 }]} />
+                      <View style={[styles.waveBar, { height: 12 }]} />
+                      <View style={[styles.waveBar, { height: 6 }]} />
+                      <View style={[styles.waveBar, { height: 10 }]} />
+                      <View style={[styles.waveBar, { height: 14 }]} />
+                    </View>
+                  </View>
+                </View>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Leaderboard Section */}
           <View style={styles.leaderboardSection}>
@@ -396,16 +380,6 @@ const styles = StyleSheet.create({
     width: 4,
     backgroundColor: colors.greenGlow,
     borderRadius: 2,
-  },
-  noMasteryContainer: {
-    alignItems: "center",
-    paddingVertical: 20,
-    gap: 12,
-  },
-  noMasteryText: {
-    fontSize: 14,
-    color: colors.sage,
-    textAlign: "center",
   },
   leaderboardSection: {
     marginBottom: 24,
