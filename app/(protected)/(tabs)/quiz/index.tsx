@@ -9,15 +9,49 @@ import {
   ActivityIndicator,
   Dimensions,
   Alert,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors } from '@/constants/colors';
 import { getQuizHistory, createQuiz, QuizHistoryItem } from '@/api/quiz';
 import QuizLoadingOverlay from '@/components/QuizLoadingOverlay';
 import EmptyState from '@/components/EmptyState';
+
+// Pressable card wrapper with scale animation
+function AnimatedPressable({ 
+  children, 
+  onPress, 
+  style,
+  disabled = false,
+}: { 
+  children: React.ReactNode; 
+  onPress?: () => void; 
+  style?: any;
+  disabled?: boolean;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.96, { damping: 15 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+      disabled={disabled}
+    >
+      <Animated.View style={[style, animatedStyle]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 const { width: screenWidth } = Dimensions.get('window');
 const CARD_GAP = 12;
@@ -166,11 +200,10 @@ export default function QuizHubScreen() {
           {!isLoading && recentTopics.length > 0 && (
             <View style={styles.topicGrid}>
               {recentTopics.map((quiz, index) => (
-                <TouchableOpacity
+                <AnimatedPressable
                   key={quiz._id}
                   style={styles.topicCard}
                   onPress={() => handleTopicPress(quiz.topic, quiz.difficulty)}
-                  activeOpacity={0.7}
                   disabled={isGenerating}
                 >
                   <View style={styles.topicIconContainer}>
@@ -195,7 +228,7 @@ export default function QuizHubScreen() {
                     <Ionicons name="refresh" size={12} color={colors.sage} />
                     <Text style={styles.retakeText}>Tap to retake</Text>
                   </View>
-                </TouchableOpacity>
+                </AnimatedPressable>
               ))}
             </View>
           )}

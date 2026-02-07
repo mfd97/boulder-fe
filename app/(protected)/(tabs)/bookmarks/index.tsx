@@ -7,15 +7,46 @@ import {
   TouchableOpacity,
   StatusBar,
   RefreshControl,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors } from '@/constants/colors';
 import { getQuizHistory, QuizHistoryItem } from '@/api/quiz';
 import { HistoryItemSkeleton } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
+
+// Pressable card wrapper with scale animation
+function AnimatedPressable({ 
+  children, 
+  onPress, 
+  style,
+}: { 
+  children: React.ReactNode; 
+  onPress?: () => void; 
+  style?: any;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.98, { damping: 15 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+    >
+      <Animated.View style={[style, animatedStyle]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -144,11 +175,10 @@ export default function HistoryScreen() {
         {!isLoading && !isError && quizzes && quizzes.length > 0 && (
           <View style={styles.historyList}>
             {quizzes.map((quiz: QuizHistoryItem) => (
-              <TouchableOpacity 
+              <AnimatedPressable 
                 key={quiz._id} 
                 style={styles.historyCard}
                 onPress={() => handleQuizPress(quiz._id)}
-                activeOpacity={0.7}
               >
                 <View style={styles.cardHeader}>
                   <Text style={styles.timeText}>
@@ -185,7 +215,7 @@ export default function HistoryScreen() {
                     <Ionicons name="chevron-forward" size={18} color={colors.sage} />
                   </View>
                 </View>
-              </TouchableOpacity>
+              </AnimatedPressable>
             ))}
           </View>
         )}

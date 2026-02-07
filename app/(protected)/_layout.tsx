@@ -9,6 +9,8 @@ export default function ProtectedLayout() {
         contentStyle: {
           backgroundColor: colors.charcoal,
         },
+        animation: 'slide_from_right',
+        animationDuration: 250,
       }}
     />
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -6,23 +6,69 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import Svg, { Circle } from "react-native-svg";
+import Animated, {
+  useSharedValue,
+  useAnimatedProps,
+  withTiming,
+  useAnimatedStyle,
+  withSpring,
+  Easing,
+} from "react-native-reanimated";
 import { colors } from "@/constants/colors";
 import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
 import { getStreak, getMastery } from "@/api/quiz";
+import { getFriendsLeaderboard, getPendingCount } from "@/api/friends";
 import { StreakSkeleton, MasterySkeleton } from "@/components/Skeleton";
 import EmptyState from "@/components/EmptyState";
+import Leaderboard from "@/components/Leaderboard";
 
 // Progress ring dimensions
 const RING_SIZE = 100;
 const RING_STROKE_WIDTH = 8;
 const RING_RADIUS = (RING_SIZE - RING_STROKE_WIDTH) / 2;
 const RING_CIRCUMFERENCE = RING_RADIUS * 2 * Math.PI;
+
+// Create animated Circle component
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+// Pressable card wrapper with scale animation
+function AnimatedPressable({ 
+  children, 
+  onPress, 
+  style,
+  disabled = false,
+}: { 
+  children: React.ReactNode; 
+  onPress?: () => void; 
+  style?: any;
+  disabled?: boolean;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.97, { damping: 15 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+      disabled={disabled}
+    >
+      <Animated.View style={[style, animatedStyle]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
 
 export default function HomeScreen() {
   // Fetch streak data
@@ -39,6 +85,21 @@ export default function HomeScreen() {
     queryFn: getMastery,
     refetchOnMount: 'always',
     staleTime: 0,
+  });
+
+  // Fetch leaderboard data
+  const { data: leaderboardData = [], isLoading: isLeaderboardLoading } = useQuery({
+    queryKey: ['friendsLeaderboard'],
+    queryFn: getFriendsLeaderboard,
+    refetchOnMount: 'always',
+    staleTime: 0,
+  });
+
+  // Fetch pending friend request count
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ['pendingCount'],
+    queryFn: getPendingCount,
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Debug logging
@@ -67,6 +128,27 @@ export default function HomeScreen() {
   };
   const starCount = getStarCount(masteryDifficulty);
 
+  // Animated progress ring
+  const progressAnimation = useSharedValue(0);
+
+  useEffect(() => {
+    if (hasCompletedToday && todayAverageScore > 0) {
+      // Animate from 0 to actual score
+      progressAnimation.value = withTiming(todayAverageScore / 100, {
+        duration: 1200,
+        easing: Easing.out(Easing.cubic),
+      });
+    } else {
+      progressAnimation.value = 0;
+    }
+    // progressAnimation is a stable shared value reference from useSharedValue
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCompletedToday, todayAverageScore]);
+
+  const animatedCircleProps = useAnimatedProps(() => ({
+    strokeDashoffset: RING_CIRCUMFERENCE - progressAnimation.value * RING_CIRCUMFERENCE,
+  }));
+
   return (
     <View style={styles.wrapper}>
       <AnimatedMeshGradient />
@@ -81,13 +163,6 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.brandText}>BOULDER</Text>
           </View>
-          <TouchableOpacity>
-            <Ionicons
-              name="person-circle-outline"
-              size={32}
-              color={colors.offWhite}
-            />
-          </TouchableOpacity>
         </View>
 
         <ScrollView
@@ -120,9 +195,9 @@ export default function HomeScreen() {
                       strokeWidth={RING_STROKE_WIDTH}
                       fill="transparent"
                     />
-                    {/* Progress Circle - only show when there's a score */}
+                    {/* Animated Progress Circle */}
                     {hasCompletedToday && (
-                      <Circle
+                      <AnimatedCircle
                         cx={RING_SIZE / 2}
                         cy={RING_SIZE / 2}
                         r={RING_RADIUS}
@@ -130,7 +205,7 @@ export default function HomeScreen() {
                         strokeWidth={RING_STROKE_WIDTH}
                         fill="transparent"
                         strokeDasharray={RING_CIRCUMFERENCE}
-                        strokeDashoffset={RING_CIRCUMFERENCE - (todayAverageScore / 100) * RING_CIRCUMFERENCE}
+                        animatedProps={animatedCircleProps}
                         strokeLinecap="round"
                         rotation="-90"
                         origin={`${RING_SIZE / 2}, ${RING_SIZE / 2}`}
@@ -221,23 +296,42 @@ export default function HomeScreen() {
 
           {/* Leaderboard Section */}
           <View style={styles.leaderboardSection}>
-            <Text style={styles.sectionTitle}>Top Contenders</Text>
-            <Text style={styles.leaderboardLabel}>LIVE LEADERBOARD</Text>
+            <View style={styles.leaderboardHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Top Contenders</Text>
+                <Text style={styles.leaderboardLabel}>FRIENDS LEADERBOARD</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.friendsButton}
+                onPress={() => router.push('/(protected)/(tabs)/home/friends')}
+              >
+                <Ionicons name="people" size={20} color={colors.charcoal} />
+                {pendingCount > 0 && (
+                  <View style={styles.pendingBadge}>
+                    <Text style={styles.pendingBadgeText}>{pendingCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+            <Leaderboard
+              data={leaderboardData}
+              isLoading={isLeaderboardLoading}
+              onAddFriends={() => router.push('/(protected)/(tabs)/home/friends')}
+            />
           </View>
 
           {/* Start Quiz Button */}
-          <TouchableOpacity style={styles.startQuizButton} onPress={() => router.push(`/quiz/CreateQuiz`)}>
-            <Text
-              style={styles.startQuizText}
-            >
-              START QUIZ
-            </Text>
+          <AnimatedPressable 
+            style={styles.startQuizButton} 
+            onPress={() => router.push(`/quiz/CreateQuiz`)}
+          >
+            <Text style={styles.startQuizText}>START QUIZ</Text>
             <Ionicons
               name="chevron-forward"
               size={20}
               color={colors.charcoal}
             />
-          </TouchableOpacity>
+          </AnimatedPressable>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -427,13 +521,44 @@ const styles = StyleSheet.create({
   leaderboardSection: {
     marginBottom: 24,
   },
+  leaderboardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
   leaderboardLabel: {
     fontSize: 12,
     fontWeight: "600",
     color: colors.offWhite,
     opacity: 0.7,
     letterSpacing: 1,
-    marginTop: 8,
+    marginTop: 4,
+  },
+  friendsButton: {
+    backgroundColor: colors.greenGlow,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  pendingBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#FF6B6B",
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  pendingBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.offWhite,
   },
   startQuizButton: {
     backgroundColor: colors.sage,
