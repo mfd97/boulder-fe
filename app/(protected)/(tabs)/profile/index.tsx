@@ -25,11 +25,13 @@ import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useSocket } from '@/contexts/SocketContext';
 
 export default function ProfileScreen() {
   const { setIsAuth } = useContext(AuthContext);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { disconnect } = useSocket();
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -79,11 +81,13 @@ export default function ProfileScreen() {
     try {
       await logout();
     } finally {
+      // Disconnect socket
+      disconnect();
       await SecureStore.deleteItemAsync('token');
       setIsAuth(false);
       router.replace('/login');
     }
-  }, [router, setIsAuth]);
+  }, [router, setIsAuth, disconnect]);
 
   const confirmLogout = () => {
     Alert.alert(

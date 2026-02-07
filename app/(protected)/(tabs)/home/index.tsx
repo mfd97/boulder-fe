@@ -25,6 +25,7 @@ import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
 import { getStreak, getMastery } from "@/api/quiz";
 import { getFriendsLeaderboard, getPendingCount } from "@/api/friends";
+import { getGameInvitationCount } from "@/api/game";
 import { StreakSkeleton, MasterySkeleton } from "@/components/Skeleton";
 import EmptyState from "@/components/EmptyState";
 import Leaderboard from "@/components/Leaderboard";
@@ -100,6 +101,13 @@ export default function HomeScreen() {
     queryKey: ['pendingCount'],
     queryFn: getPendingCount,
     refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch pending game invitation count
+  const { data: gameInvitationCount = 0 } = useQuery({
+    queryKey: ['gameInvitationCount'],
+    queryFn: getGameInvitationCount,
+    refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   // Debug logging
@@ -320,18 +328,37 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Start Quiz Button */}
-          <AnimatedPressable 
-            style={styles.startQuizButton} 
-            onPress={() => router.push(`/quiz/CreateQuiz`)}
-          >
-            <Text style={styles.startQuizText}>START QUIZ</Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={colors.charcoal}
-            />
-          </AnimatedPressable>
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            {/* Multiplayer Button */}
+            <AnimatedPressable 
+              style={styles.multiplayerButton} 
+              onPress={() => router.push('/(protected)/(tabs)/home/game')}
+            >
+              <View style={styles.multiplayerContent}>
+                <Ionicons name="game-controller" size={22} color={colors.greenGlow} />
+                <Text style={styles.multiplayerText}>MULTIPLAYER</Text>
+              </View>
+              {gameInvitationCount > 0 && (
+                <View style={styles.gameInviteBadge}>
+                  <Text style={styles.gameInviteBadgeText}>{gameInvitationCount}</Text>
+                </View>
+              )}
+            </AnimatedPressable>
+
+            {/* Start Quiz Button */}
+            <AnimatedPressable 
+              style={styles.startQuizButton} 
+              onPress={() => router.push(`/quiz/CreateQuiz`)}
+            >
+              <Text style={styles.startQuizText}>START QUIZ</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.charcoal}
+              />
+            </AnimatedPressable>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -560,6 +587,50 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.offWhite,
   },
+  actionButtons: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  multiplayerButton: {
+    backgroundColor: colors.darkGrey,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: colors.greenGlow + "40",
+    position: "relative",
+  },
+  multiplayerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  multiplayerText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.greenGlow,
+    letterSpacing: 1,
+  },
+  gameInviteBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#FF6B6B",
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  gameInviteBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.offWhite,
+  },
   startQuizButton: {
     backgroundColor: colors.sage,
     borderRadius: 16,
@@ -569,7 +640,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
-    marginBottom: 20,
   },
   startQuizText: {
     fontSize: 18,

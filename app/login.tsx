@@ -18,6 +18,7 @@ import { AuthContext } from '@/context/AuthContext';
 import { setItemAsync } from 'expo-secure-store';
 import Input from './components/Input';
 import type { AxiosError } from 'axios';
+import { useSocket } from '@/contexts/SocketContext';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,6 +30,7 @@ export default function LoginScreen() {
   const [emailTouched, setEmailTouched] = useState(false)
   const { setIsAuth} = useContext(AuthContext)
   const queryClient = useQueryClient()
+  const { connect } = useSocket()
 
   // Validation helpers
   const isEmailValid = EMAIL_REGEX.test(email);
@@ -59,10 +61,13 @@ export default function LoginScreen() {
       // 2. Clear all cached data from previous user
       queryClient.clear()
       
-      // 3. Set user to use
+      // 3. Connect to socket for real-time features
+      connect()
+      
+      // 4. Set user to use
       setIsAuth(true)     
 
-      // 4. navigate to home page
+      // 5. Navigate to home page
       router.replace("/(protected)/(tabs)/home")
     },
     onError(err: AxiosError<{ error?: string }>){

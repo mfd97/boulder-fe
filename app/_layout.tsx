@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LaunchScreen from "@/components/LaunchScreen";
 import { colors } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -91,7 +92,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RootLayoutNav />
+      <SocketProvider>
+        <RootLayoutNav />
+      </SocketProvider>
     </QueryClientProvider>
   );
 }
