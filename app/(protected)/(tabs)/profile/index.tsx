@@ -16,8 +16,8 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '@/constants/colors';
 import { logout, getMe, updateProfile } from '@/api/auth';
+import { useTheme } from '@/contexts/ThemeContext';
 import { getProfileStats } from '@/api/quiz';
 import * as SecureStore from 'expo-secure-store';
 import { AuthContext } from '@/context/AuthContext';
@@ -31,13 +31,144 @@ import AppHeader from '@/components/AppHeader';
 import Toast from '@/components/Toast';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
-import { cardStyle } from '@/components/Card';
+import Card, { useCardStyle } from '@/components/Card';
 
 export default function ProfileScreen() {
   const { setIsAuth } = useContext(AuthContext);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { disconnect } = useSocket();
+  const { colors, colorScheme, setColorScheme } = useTheme();
+  const cardStyle = useCardStyle();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background },
+        loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+        scrollView: { flex: 1 },
+        scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.section },
+        titleSection: { marginBottom: spacing.xxl },
+        title: { ...typography.title, color: colors.textPrimary, marginBottom: spacing.sm },
+        subtitle: { ...typography.bodySmall, color: colors.sage, marginTop: spacing.xs },
+        profileHeader: { alignItems: 'center', marginBottom: spacing.section },
+        avatarContainer: { marginBottom: spacing.lg, position: 'relative' },
+        avatar: {
+          width: 100,
+          height: 100,
+          borderRadius: 50,
+          backgroundColor: colors.sage,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        avatarImage: { width: 100, height: 100, borderRadius: 50 },
+        avatarText: { ...typography.display, fontSize: 36, color: colors.charcoal },
+        editBadge: {
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          backgroundColor: colors.greenGlow,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderWidth: 2,
+          borderColor: colors.charcoal,
+        },
+        nameContainer: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+        userName: { ...typography.titleSmall, fontSize: 24, color: colors.textPrimary },
+        editIcon: { opacity: 0.6 },
+        userEmail: { ...typography.bodySmall, color: colors.textPrimary, opacity: 0.6, marginTop: spacing.xs },
+        appearanceSection: { marginBottom: spacing.xxl },
+        appearanceTitle: { ...typography.bodySmall, fontWeight: '600', color: colors.textPrimary, marginBottom: spacing.sm },
+        appearanceRow: { flexDirection: 'row', gap: spacing.sm },
+        themeOption: {
+          flex: 1,
+          paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
+          borderRadius: 12,
+          backgroundColor: colors.darkGrey,
+          alignItems: 'center',
+          borderWidth: 1.5,
+          borderColor: 'transparent',
+        },
+        themeOptionActive: { borderColor: colors.greenGlow, backgroundColor: colors.greenGlow + '20' },
+        themeOptionText: { ...typography.bodySmall, fontWeight: '600', color: colors.sage },
+        themeOptionTextActive: { color: colors.greenGlow },
+        statsSection: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.xxxl },
+        statCard: { ...cardStyle, flex: 1, minWidth: '47%', alignItems: 'center' },
+        statNumber: { ...typography.title, fontSize: 28, color: colors.greenGlow, marginBottom: spacing.xs },
+        statLabel: { ...typography.caption, color: colors.textPrimary, opacity: 0.8, textAlign: 'center' },
+        statSubtext: { ...typography.label, color: colors.textPrimary, opacity: 0.6, marginTop: 2 },
+        actionsSection: { gap: spacing.md },
+        logoutButton: {
+          backgroundColor: colors.darkGrey,
+          borderRadius: 16,
+          paddingVertical: spacing.lg,
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: colors.error + '40',
+        },
+        logoutButtonText: { ...typography.caption, fontWeight: '600', color: colors.error, letterSpacing: 1 },
+        modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.7)', justifyContent: 'flex-end' },
+        modalContent: {
+          backgroundColor: colors.darkGrey,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          padding: spacing.xxl,
+          paddingBottom: spacing.section,
+        },
+        modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.xxl },
+        modalTitle: { ...typography.titleSmall, color: colors.textPrimary },
+        editAvatarSection: { alignItems: 'center', marginBottom: spacing.xxl },
+        editAvatar: {
+          width: 100,
+          height: 100,
+          borderRadius: 50,
+          backgroundColor: colors.sage,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        editAvatarImage: { width: 100, height: 100, borderRadius: 50 },
+        avatarButtons: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
+        changePhotoButton: {
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.sm,
+          backgroundColor: colors.sage,
+          borderRadius: spacing.sm,
+        },
+        changePhotoText: { ...typography.bodySmall, fontWeight: '600', color: colors.charcoal },
+        removePhotoButton: {
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.sm,
+          backgroundColor: 'transparent',
+          borderRadius: spacing.sm,
+          borderWidth: 1,
+          borderColor: colors.textPrimary + '40',
+        },
+        removePhotoText: { ...typography.bodySmall, fontWeight: '600', color: colors.textPrimary },
+        inputSection: { marginBottom: spacing.xxl },
+        inputLabel: { ...typography.bodySmall, fontWeight: '600', color: colors.textPrimary, marginBottom: spacing.sm },
+        textInput: {
+          backgroundColor: colors.background,
+          borderRadius: 12,
+          padding: spacing.lg,
+          ...typography.body,
+          color: colors.textPrimary,
+          borderWidth: 1,
+          borderColor: colors.textPrimary + '20',
+        },
+        saveButton: {
+          backgroundColor: colors.greenGlow,
+          borderRadius: 16,
+          paddingVertical: spacing.lg,
+          alignItems: 'center',
+        },
+        saveButtonDisabled: { opacity: 0.6 },
+        saveButtonText: { ...typography.caption, fontWeight: '600', color: colors.charcoal, letterSpacing: 1 },
+      }),
+    [colors, cardStyle]
+  );
 
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -263,6 +394,46 @@ export default function ProfileScreen() {
             </View>
           </View>
 
+          {/* Appearance */}
+          <View style={styles.appearanceSection}>
+            <Text style={styles.appearanceTitle}>Appearance</Text>
+            <View style={styles.appearanceRow}>
+              <TouchableOpacity
+                style={[styles.themeOption, colorScheme === 'light' && styles.themeOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setColorScheme('light');
+                }}
+                accessibilityLabel="Light mode"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.themeOptionText, colorScheme === 'light' && styles.themeOptionTextActive]}>Light</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.themeOption, colorScheme === 'dark' && styles.themeOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setColorScheme('dark');
+                }}
+                accessibilityLabel="Dark mode"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.themeOptionText, colorScheme === 'dark' && styles.themeOptionTextActive]}>Dark</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.themeOption, colorScheme === 'system' && styles.themeOptionActive]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setColorScheme('system');
+                }}
+                accessibilityLabel="System default"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.themeOptionText, colorScheme === 'system' && styles.themeOptionTextActive]}>System</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* Action Buttons */}
           <View style={styles.actionsSection}>
             <TouchableOpacity
@@ -299,7 +470,7 @@ export default function ProfileScreen() {
                 accessibilityLabel="Close"
                 accessibilityRole="button"
               >
-                <Ionicons name="close" size={24} color={colors.offWhite} />
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -344,7 +515,7 @@ export default function ProfileScreen() {
                 value={editName}
                 onChangeText={setEditName}
                 placeholder="Enter your name"
-                placeholderTextColor={colors.offWhite + '60'}
+                placeholderTextColor={colors.textPrimary + '60'}
                 autoCapitalize="words"
               />
             </View>
@@ -369,242 +540,3 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.section,
-  },
-  titleSection: {
-    marginBottom: spacing.xxl,
-  },
-  title: {
-    ...typography.title,
-    color: colors.offWhite,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    ...typography.bodySmall,
-    color: colors.sage,
-    marginTop: spacing.xs,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    marginBottom: spacing.section,
-  },
-  avatarContainer: {
-    marginBottom: spacing.lg,
-    position: 'relative',
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.sage,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  avatarText: {
-    ...typography.display,
-    fontSize: 36,
-    color: colors.charcoal,
-  },
-  editBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.greenGlow,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.charcoal,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  userName: {
-    ...typography.titleSmall,
-    fontSize: 24,
-    color: colors.offWhite,
-  },
-  editIcon: {
-    opacity: 0.6,
-  },
-  userEmail: {
-    ...typography.bodySmall,
-    color: colors.offWhite,
-    opacity: 0.6,
-    marginTop: spacing.xs,
-  },
-  statsSection: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    marginBottom: spacing.xxxl,
-  },
-  statCard: {
-    ...cardStyle,
-    flex: 1,
-    minWidth: '47%',
-    alignItems: 'center',
-  },
-  statNumber: {
-    ...typography.title,
-    fontSize: 28,
-    color: colors.greenGlow,
-    marginBottom: spacing.xs,
-  },
-  statLabel: {
-    ...typography.caption,
-    color: colors.offWhite,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-  statSubtext: {
-    ...typography.label,
-    color: colors.offWhite,
-    opacity: 0.6,
-    marginTop: 2,
-  },
-  actionsSection: {
-    gap: spacing.md,
-  },
-  logoutButton: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.error + '40',
-  },
-  logoutButtonText: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.error,
-    letterSpacing: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.darkGrey,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: spacing.xxl,
-    paddingBottom: spacing.section,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xxl,
-  },
-  modalTitle: {
-    ...typography.titleSmall,
-    color: colors.offWhite,
-  },
-  editAvatarSection: {
-    alignItems: 'center',
-    marginBottom: spacing.xxl,
-  },
-  editAvatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.sage,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  editAvatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  avatarButtons: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
-  changePhotoButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.sage,
-    borderRadius: spacing.sm,
-  },
-  changePhotoText: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.charcoal,
-  },
-  removePhotoButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: 'transparent',
-    borderRadius: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.offWhite + '40',
-  },
-  removePhotoText: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  inputSection: {
-    marginBottom: spacing.xxl,
-  },
-  inputLabel: {
-    ...typography.bodySmall,
-    fontWeight: '600',
-    color: colors.offWhite,
-    marginBottom: spacing.sm,
-  },
-  textInput: {
-    backgroundColor: colors.charcoal,
-    borderRadius: 12,
-    padding: spacing.lg,
-    ...typography.body,
-    color: colors.offWhite,
-    borderWidth: 1,
-    borderColor: colors.offWhite + '20',
-  },
-  saveButton: {
-    backgroundColor: colors.greenGlow,
-    borderRadius: 16,
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.6,
-  },
-  saveButtonText: {
-    ...typography.caption,
-    fontWeight: '600',
-    color: colors.charcoal,
-    letterSpacing: 1,
-  },
-});

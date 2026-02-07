@@ -1,6 +1,7 @@
 import { register } from '@/api/auth';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { AuthContext } from '@/context/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
@@ -63,25 +64,27 @@ function AnimatedButton({
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
 
-// Password strength calculator
-const calculatePasswordStrength = (password: string): { score: number; label: string; color: string } => {
+function calculatePasswordStrength(
+  password: string,
+  colors: ThemeColors
+): { score: number; label: string; color: string } {
   let score = 0;
-  
   if (password.length >= MIN_PASSWORD_LENGTH) score += 1;
   if (password.length >= 12) score += 1;
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
   if (/\d/.test(password)) score += 1;
   if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
-  
   if (score <= 1) return { score, label: 'Weak', color: colors.error };
   if (score <= 2) return { score, label: 'Fair', color: '#FFB347' };
   if (score <= 3) return { score, label: 'Good', color: '#FFD93D' };
   if (score <= 4) return { score, label: 'Strong', color: colors.greenGlow };
   return { score, label: 'Very Strong', color: colors.greenGlow };
-};
+}
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useRegisterStyles(colors);
   const { setIsAuth } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const [fullName, setFullName] = useState('');
@@ -100,7 +103,7 @@ export default function RegisterScreen() {
   const isPasswordValid = password.length >= MIN_PASSWORD_LENGTH;
   
   // Password strength
-  const passwordStrength = useMemo(() => calculatePasswordStrength(password), [password]);
+  const passwordStrength = useMemo(() => calculatePasswordStrength(password, colors), [password, colors]);
   
   // Error messages
   const fullNameError = fullNameTouched && fullName.length > 0 && !isFullNameValid
@@ -332,10 +335,11 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function useRegisterStyles(colors: ThemeColors) {
+  return useMemo(() => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.charcoal,
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -371,13 +375,13 @@ const styles = StyleSheet.create({
   brandText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: colors.offWhite,
+    color: colors.textPrimary,
     letterSpacing: 1,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.offWhite,
+    color: colors.textPrimary,
     marginBottom: 32,
   },
   form: {
@@ -448,7 +452,7 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 11,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     textAlign: 'center',
     opacity: 0.6,
     marginBottom: 24,
@@ -460,7 +464,7 @@ const styles = StyleSheet.create({
   },
   loginText: {
     fontSize: 14,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.8,
   },
   loginLink: {
@@ -472,4 +476,5 @@ const styles = StyleSheet.create({
   createButtonDisabled: {
     opacity: 0.6,
   },
-});
+  }), [colors]);
+}

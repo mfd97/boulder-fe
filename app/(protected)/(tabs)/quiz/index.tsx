@@ -17,14 +17,15 @@ import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { getQuizHistory, createQuiz, QuizHistoryItem } from '@/api/quiz';
 import QuizLoadingOverlay from '@/components/QuizLoadingOverlay';
 import EmptyState from '@/components/EmptyState';
 import AppHeader from '@/components/AppHeader';
-import { cardStyle } from '@/components/Card';
+import { useCardStyle } from '@/components/Card';
 
 // Pressable card wrapper with scale animation
 function AnimatedPressable({ 
@@ -77,6 +78,9 @@ const TOPIC_ICONS: Array<keyof typeof Ionicons.glyphMap> = [
 ];
 
 export default function QuizHubScreen() {
+  const { colors } = useTheme();
+  const cardStyle = useCardStyle();
+  const styles = useMemo(() => makeStyles(colors, cardStyle), [colors, cardStyle]);
   const router = useRouter();
   const [generatingTopic, setGeneratingTopic] = useState('');
 
@@ -250,145 +254,36 @@ export default function QuizHubScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.section,
-  },
-  titleSection: {
-    marginBottom: spacing.xxl,
-  },
-  title: {
-    ...typography.title,
-    color: colors.offWhite,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    ...typography.bodySmall,
-    color: colors.sage,
-    marginTop: spacing.xs,
-  },
-  createButton: {
-    backgroundColor: '#3A3D40',
-    borderRadius: 16,
-    padding: spacing.xl,
-    marginBottom: spacing.xxxl,
-  },
-  createButtonContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  createButtonTextContainer: {
-    flex: 1,
-  },
-  createButtonTitle: {
-    ...typography.titleSmall,
-    fontSize: 18,
-    color: colors.offWhite,
-    marginBottom: spacing.xs,
-  },
-  createButtonSubtitle: {
-    ...typography.caption,
-    color: colors.offWhite,
-    opacity: 0.7,
-  },
-  createButtonDisabled: {
-    opacity: 0.6,
-  },
-  recentSection: {
-    marginBottom: spacing.xxl,
-  },
-  recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  recentTitle: {
-    ...typography.caption,
-    color: colors.offWhite,
-    letterSpacing: 1,
-  },
-  viewHistoryLink: {
-    ...typography.caption,
-    color: colors.greenGlow,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: spacing.section,
-    gap: spacing.sm,
-  },
-  emptyText: {
-    ...typography.body,
-    color: colors.offWhite,
-  },
-  emptySubtext: {
-    fontSize: 13,
-    color: colors.sage,
-  },
-  topicGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: CARD_GAP,
-  },
-  topicCard: {
-    width: CARD_SIZE,
-    height: CARD_SIZE,
-    ...cardStyle,
-    justifyContent: 'space-between',
-  },
-  topicIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: colors.charcoal,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topicTitle: {
-    ...typography.body,
-    fontSize: 15,
-    color: colors.offWhite,
-    lineHeight: 20,
-  },
-  topicMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  topicScore: {
-    ...typography.titleSmall,
-    fontSize: 18,
-    color: colors.greenGlow,
-  },
-  topicDifficulty: {
-    backgroundColor: colors.charcoal,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  topicDifficultyText: {
-    ...typography.label,
-    fontSize: 9,
-    color: colors.sage,
-    letterSpacing: 0.5,
-  },
-  retakeHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  retakeText: {
-    fontSize: 11,
-    color: colors.sage,
-  },
-});
+function makeStyles(colors: ThemeColors, cardStyle: ReturnType<typeof useCardStyle>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.section },
+    titleSection: { marginBottom: spacing.xxl },
+    title: { ...typography.title, color: colors.textPrimary, marginBottom: spacing.sm },
+    subtitle: { ...typography.bodySmall, color: colors.sage, marginTop: spacing.xs },
+    createButton: { backgroundColor: colors.darkGrey, borderRadius: 16, padding: spacing.xl, marginBottom: spacing.xxxl },
+    createButtonContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    createButtonTextContainer: { flex: 1 },
+    createButtonTitle: { ...typography.titleSmall, fontSize: 18, color: colors.textPrimary, marginBottom: spacing.xs },
+    createButtonSubtitle: { ...typography.caption, color: colors.textPrimary, opacity: 0.7 },
+    createButtonDisabled: { opacity: 0.6 },
+    recentSection: { marginBottom: spacing.xxl },
+    recentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
+    recentTitle: { ...typography.caption, color: colors.textPrimary, letterSpacing: 1 },
+    viewHistoryLink: { ...typography.caption, color: colors.greenGlow },
+    emptyState: { alignItems: 'center', paddingVertical: spacing.section, gap: spacing.sm },
+    emptyText: { ...typography.body, color: colors.textPrimary },
+    emptySubtext: { fontSize: 13, color: colors.sage },
+    topicGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: CARD_GAP },
+    topicCard: { width: CARD_SIZE, height: CARD_SIZE, ...cardStyle, justifyContent: 'space-between' },
+    topicIconContainer: { width: 48, height: 48, borderRadius: 12, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+    topicTitle: { ...typography.body, fontSize: 15, color: colors.textPrimary, lineHeight: 20 },
+    topicMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    topicScore: { ...typography.titleSmall, fontSize: 18, color: colors.greenGlow },
+    topicDifficulty: { backgroundColor: colors.background, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: 6 },
+    topicDifficultyText: { ...typography.label, fontSize: 9, color: colors.sage, letterSpacing: 0.5 },
+    retakeHint: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    retakeText: { fontSize: 11, color: colors.sage },
+  });
+}

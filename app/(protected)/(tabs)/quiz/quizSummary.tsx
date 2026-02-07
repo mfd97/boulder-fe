@@ -12,7 +12,8 @@ import { useMemo } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { colors } from "@/constants/colors";
+import type { ThemeColors } from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { spacing } from "@/constants/spacing";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
@@ -41,6 +42,8 @@ interface QuizResult {
 }
 
 export default function QuizSummaryScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const { resultData: resultDataParam, quizId } = useLocalSearchParams<{ 
     resultData?: string;
@@ -291,194 +294,45 @@ export default function QuizSummaryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorText: {
-    color: colors.offWhite,
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  loadingText: {
-    color: colors.sage,
-    fontSize: 14,
-    marginTop: 12,
-  },
-  headerLabel: {
-    color: colors.sage,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1.5,
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  topicTitle: {
-    color: colors.offWhite,
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 32,
-  },
-  progressContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 40,
-    height: 160,
-  },
-  progressSvg: {
-    position: "absolute",
-  },
-  progressTextContainer: {
-    alignItems: "center",
-  },
-  percentageText: {
-    color: colors.offWhite,
-    fontSize: 42,
-    fontWeight: "700",
-  },
-  completedText: {
-    color: colors.sage,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginTop: 4,
-  },
-  breakdownHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  breakdownTitle: {
-    color: colors.offWhite,
-    fontSize: 12,
-    fontWeight: "600",
-    letterSpacing: 1,
-  },
-  breakdownCount: {
-    color: colors.sage,
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  questionsList: {
-    marginBottom: spacing.xxl,
-  },
-  questionItem: {
-    flexDirection: "row",
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: spacing.md,
-  },
-  iconCorrect: {
-    backgroundColor: "rgba(159, 242, 148, 0.15)",
-  },
-  iconIncorrect: {
-    backgroundColor: colors.error + "26",
-  },
-  questionContent: {
-    flex: 1,
-  },
-  questionLabel: {
-    color: colors.sage,
-    fontSize: 10,
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  questionText: {
-    color: colors.offWhite,
-    fontSize: 15,
-    fontWeight: "500",
-    lineHeight: 22,
-    marginBottom: spacing.md,
-  },
-  answerPill: {
-    alignSelf: "flex-start",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  answerCorrect: {
-    backgroundColor: colors.sage,
-  },
-  answerIncorrect: {
-    backgroundColor: colors.darkGrey,
-    borderWidth: 1,
-    borderColor: colors.error + "4D",
-  },
-  answerText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  answerTextCorrect: {
-    color: colors.charcoal,
-  },
-  answerTextIncorrect: {
-    color: colors.offWhite,
-  },
-  correctAnswerHint: {
-    color: colors.greenGlow,
-    fontSize: 12,
-    marginTop: 8,
-    fontStyle: "italic",
-  },
-  actionButton: {
-    backgroundColor: colors.sage,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  actionButtonDisabled: {
-    opacity: 0.7,
-  },
-  actionButtonText: {
-    color: colors.charcoal,
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  generatingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  exitButton: {
-    marginTop: 12,
-    marginBottom: 20,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  exitButtonDisabled: {
-    opacity: 0.5,
-  },
-  exitButtonText: {
-    color: colors.sage,
-    fontSize: 14,
-    fontWeight: "500",
-    letterSpacing: 0.5,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    scrollView: { flex: 1 },
+    content: { paddingHorizontal: 20, paddingBottom: 40 },
+    errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+    errorText: { color: colors.textPrimary, fontSize: 18, marginBottom: 20 },
+    loadingText: { color: colors.sage, fontSize: 14, marginTop: 12 },
+    headerLabel: { color: colors.sage, fontSize: 11, fontWeight: "600", letterSpacing: 1.5, marginTop: 20, marginBottom: 8 },
+    topicTitle: { color: colors.textPrimary, fontSize: 28, fontWeight: "700", marginBottom: 32 },
+    progressContainer: { alignItems: "center", justifyContent: "center", marginBottom: 40, height: 160 },
+    progressSvg: { position: "absolute" },
+    progressTextContainer: { alignItems: "center" },
+    percentageText: { color: colors.textPrimary, fontSize: 42, fontWeight: "700" },
+    completedText: { color: colors.sage, fontSize: 11, fontWeight: "600", letterSpacing: 1, marginTop: 4 },
+    breakdownHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+    breakdownTitle: { color: colors.textPrimary, fontSize: 12, fontWeight: "600", letterSpacing: 1 },
+    breakdownCount: { color: colors.sage, fontSize: 12, fontWeight: "500" },
+    questionsList: { marginBottom: spacing.xxl },
+    questionItem: { flexDirection: "row", backgroundColor: colors.darkGrey, borderRadius: 12, padding: spacing.lg, marginBottom: spacing.lg },
+    iconContainer: { width: 28, height: 28, borderRadius: 14, justifyContent: "center", alignItems: "center", marginRight: spacing.md },
+    iconCorrect: { backgroundColor: "rgba(159, 242, 148, 0.15)" },
+    iconIncorrect: { backgroundColor: colors.error + "26" },
+    questionContent: { flex: 1 },
+    questionLabel: { color: colors.sage, fontSize: 10, fontWeight: "600", letterSpacing: 1, marginBottom: 6 },
+    questionText: { color: colors.textPrimary, fontSize: 15, fontWeight: "500", lineHeight: 22, marginBottom: spacing.md },
+    answerPill: { alignSelf: "flex-start", paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 },
+    answerCorrect: { backgroundColor: colors.sage },
+    answerIncorrect: { backgroundColor: colors.darkGrey, borderWidth: 1, borderColor: colors.error + "4D" },
+    answerText: { fontSize: 14, fontWeight: "600" },
+    answerTextCorrect: { color: colors.charcoal },
+    answerTextIncorrect: { color: colors.textPrimary },
+    correctAnswerHint: { color: colors.greenGlow, fontSize: 12, marginTop: 8, fontStyle: "italic" },
+    actionButton: { backgroundColor: colors.sage, paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 8 },
+    actionButtonDisabled: { opacity: 0.7 },
+    actionButtonText: { color: colors.charcoal, fontSize: 14, fontWeight: "700", letterSpacing: 1 },
+    generatingContainer: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
+    exitButton: { marginTop: 12, marginBottom: 20, paddingVertical: 14, alignItems: "center" },
+    exitButtonDisabled: { opacity: 0.5 },
+    exitButtonText: { color: colors.sage, fontSize: 14, fontWeight: "500", letterSpacing: 0.5 },
+  });
+}

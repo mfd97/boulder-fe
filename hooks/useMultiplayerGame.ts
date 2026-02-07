@@ -84,7 +84,7 @@ export function useMultiplayerGame(gameId: string) {
     countdown: 3,
   });
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Countdown logic
   useEffect(() => {

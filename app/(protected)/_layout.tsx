@@ -1,12 +1,13 @@
 import { useEffect, useState, useContext } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { colors } from '@/constants/colors';
 import { AuthContext } from '@/context/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function ProtectedLayout() {
   const router = useRouter();
   const { setIsAuth } = useContext(AuthContext);
+  const { colors } = useTheme();
   const [hasCheckedToken, setHasCheckedToken] = useState(false);
   const [hasToken, setHasToken] = useState(false);
 
@@ -36,7 +37,7 @@ export default function ProtectedLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: {
-          backgroundColor: colors.charcoal,
+          backgroundColor: colors.background,
         },
         animation: 'slide_from_right',
         animationDuration: 250,

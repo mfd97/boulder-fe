@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -11,7 +11,7 @@ import Animated, {
   Easing,
   type SharedValue,
 } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -24,48 +24,15 @@ interface MeshBlob {
   duration: number;
 }
 
-const meshBlobs: MeshBlob[] = [
-  {
-    id: 1,
-    colors: [colors.charcoal, colors.greenGlow],
-    startX: 0.2,
-    startY: 0.3,
-    size: 300,
-    duration: 8000,
-  },
-  {
-    id: 2,
-    colors: [colors.sage, colors.charcoal],
-    startX: 0.7,
-    startY: 0.5,
-    size: 250,
-    duration: 10000,
-  },
-  {
-    id: 3,
-    colors: [colors.greenGlow, colors.sage],
-    startX: 0.5,
-    startY: 0.7,
-    size: 280,
-    duration: 12000,
-  },
-  {
-    id: 4,
-    colors: [colors.darkGrey, colors.greenGlow],
-    startX: 0.3,
-    startY: 0.8,
-    size: 200,
-    duration: 9000,
-  },
-  {
-    id: 5,
-    colors: [colors.charcoal, colors.darkGrey],
-    startX: 0.8,
-    startY: 0.2,
-    size: 320,
-    duration: 11000,
-  },
-];
+function buildMeshBlobs(colors: ReturnType<typeof useTheme>['colors']): MeshBlob[] {
+  return [
+    { id: 1, colors: [colors.charcoal, colors.greenGlow], startX: 0.2, startY: 0.3, size: 300, duration: 8000 },
+    { id: 2, colors: [colors.sage, colors.charcoal], startX: 0.7, startY: 0.5, size: 250, duration: 10000 },
+    { id: 3, colors: [colors.greenGlow, colors.sage], startX: 0.5, startY: 0.7, size: 280, duration: 12000 },
+    { id: 4, colors: [colors.darkGrey, colors.greenGlow], startX: 0.3, startY: 0.8, size: 200, duration: 9000 },
+    { id: 5, colors: [colors.charcoal, colors.darkGrey], startX: 0.8, startY: 0.2, size: 320, duration: 11000 },
+  ];
+}
 
 interface AnimatedBlobProps {
   blob: MeshBlob;
@@ -134,7 +101,9 @@ function AnimatedBlob({ blob, progress }: AnimatedBlobProps) {
 }
 
 export default function AnimatedMeshGradient() {
+  const { colors } = useTheme();
   const progress = useSharedValue(0);
+  const meshBlobs = useMemo(() => buildMeshBlobs(colors), [colors]);
 
   useEffect(() => {
     progress.value = withRepeat(

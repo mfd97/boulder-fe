@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
@@ -57,9 +57,68 @@ const ONBOARDING_KEY = '@boulder_onboarding_complete';
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background },
+        header: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: spacing.xl, paddingTop: spacing.sm },
+        skipButton: { padding: spacing.sm },
+        skipText: { ...typography.body, color: colors.sage },
+        slide: {
+          width: SCREEN_WIDTH,
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: spacing.section,
+        },
+        iconContainer: {
+          width: 160,
+          height: 160,
+          borderRadius: 80,
+          backgroundColor: colors.darkGrey,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: spacing.xxxl + spacing.lg,
+        },
+        title: {
+          ...typography.title,
+          fontSize: 28,
+          color: colors.textPrimary,
+          textAlign: 'center',
+          marginBottom: spacing.lg,
+        },
+        description: {
+          ...typography.body,
+          color: colors.textPrimary,
+          opacity: 0.8,
+          textAlign: 'center',
+        },
+        bottomSection: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl },
+        dotsContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.xxxl },
+        dot: {
+          height: spacing.sm,
+          borderRadius: spacing.xs,
+          backgroundColor: colors.greenGlow,
+          marginHorizontal: spacing.xs,
+        },
+        nextButton: {
+          backgroundColor: colors.sage,
+          borderRadius: 16,
+          paddingVertical: spacing.xl,
+          paddingHorizontal: spacing.xxl,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: spacing.sm,
+        },
+        nextButtonText: { ...typography.titleSmall, fontSize: 18, color: colors.charcoal, letterSpacing: 0.5 },
+      }),
+    [colors]
+  );
 
   const handleComplete = async () => {
     try {
@@ -204,83 +263,3 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-  },
-  skipButton: {
-    padding: spacing.sm,
-  },
-  skipText: {
-    ...typography.body,
-    color: colors.sage,
-  },
-  slide: {
-    width: SCREEN_WIDTH,
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.section,
-  },
-  iconContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: colors.darkGrey,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xxxl + spacing.lg,
-  },
-  title: {
-    ...typography.title,
-    fontSize: 28,
-    color: colors.offWhite,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  description: {
-    ...typography.body,
-    color: colors.offWhite,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-  bottomSection: {
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xxxl,
-  },
-  dot: {
-    height: spacing.sm,
-    borderRadius: spacing.xs,
-    backgroundColor: colors.greenGlow,
-    marginHorizontal: spacing.xs,
-  },
-  nextButton: {
-    backgroundColor: colors.sage,
-    borderRadius: 16,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.xxl,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  nextButtonText: {
-    ...typography.titleSmall,
-    fontSize: 18,
-    color: colors.charcoal,
-    letterSpacing: 0.5,
-  },
-});

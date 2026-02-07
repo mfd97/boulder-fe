@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { getFriends, Friend } from '@/api/friends';
 import { useSocket } from '@/contexts/SocketContext';
 
@@ -56,6 +56,7 @@ function AnimatedButton({
 }
 
 export default function CreateGameScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { connect, isConnected, createGame, onGameCreated, offGameCreated, onError, offError } = useSocket();
   
@@ -138,6 +139,54 @@ export default function CreateGameScreen() {
 
   const canCreate = topic.trim().length > 0 && selectedFriend !== null && !isCreating;
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background },
+        header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+        backButton: { padding: 8 },
+        headerTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+        headerSpacer: { width: 40 },
+        scrollView: { flex: 1 },
+        scrollContent: { padding: 20, paddingBottom: 100 },
+        section: { marginBottom: 28 },
+        sectionLabel: { fontSize: 12, fontWeight: '700', color: colors.sage, letterSpacing: 1.5, marginBottom: 12 },
+        sectionSubtext: { fontSize: 13, color: colors.sage, marginBottom: 12, marginTop: -8 },
+        topicInput: { backgroundColor: colors.darkGrey, borderRadius: 12, padding: 16, fontSize: 16, color: colors.textPrimary },
+        optionsRow: { flexDirection: 'row', gap: 12 },
+        optionButton: { flex: 1, backgroundColor: colors.darkGrey, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+        optionButtonSelected: { borderColor: colors.greenGlow, backgroundColor: colors.greenGlow + '20' },
+        optionText: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+        optionTextSelected: { color: colors.greenGlow },
+        roundButton: { flex: 1, backgroundColor: colors.darkGrey, borderRadius: 12, paddingVertical: 16, alignItems: 'center', borderWidth: 2, borderColor: 'transparent' },
+        roundNumber: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+        roundLabel: { fontSize: 12, color: colors.sage, marginTop: 4 },
+        loader: { marginTop: 20 },
+        noFriendsContainer: { alignItems: 'center', paddingVertical: 30, backgroundColor: colors.darkGrey, borderRadius: 16 },
+        noFriendsText: { fontSize: 16, color: colors.sage, marginTop: 12, marginBottom: 16 },
+        addFriendsButton: { backgroundColor: colors.greenGlow, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+        addFriendsButtonText: { fontSize: 14, fontWeight: '600', color: colors.charcoal },
+        friendsList: { gap: 12 },
+        friendCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.darkGrey, borderRadius: 12, padding: 14, borderWidth: 2, borderColor: 'transparent' },
+        friendCardSelected: { borderColor: colors.greenGlow, backgroundColor: colors.greenGlow + '15' },
+        friendAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+        friendAvatarSelected: { backgroundColor: colors.greenGlow + '30' },
+        friendInitial: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+        friendInfo: { flex: 1 },
+        friendName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+        friendEmail: { fontSize: 13, color: colors.sage, marginTop: 2 },
+        footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 34, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.darkGrey },
+        createButton: { backgroundColor: colors.greenGlow, borderRadius: 12, paddingVertical: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
+        createButtonDisabled: { opacity: 0.5 },
+        createButtonText: { fontSize: 16, fontWeight: '700', color: colors.charcoal },
+        preparingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+        preparingCard: { backgroundColor: colors.darkGrey, borderRadius: 16, padding: 32, marginHorizontal: 24, alignItems: 'center', maxWidth: 320 },
+        preparingTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginTop: 20, textAlign: 'center' },
+        preparingSubtitle: { fontSize: 14, color: colors.sage, marginTop: 8, textAlign: 'center', lineHeight: 20 },
+      }),
+    [colors]
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -158,7 +207,7 @@ export default function CreateGameScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.offWhite} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Challenge a Friend</Text>
         <View style={styles.headerSpacer} />
@@ -309,231 +358,3 @@ export default function CreateGameScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 100,
-  },
-  section: {
-    marginBottom: 28,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.sage,
-    letterSpacing: 1.5,
-    marginBottom: 12,
-  },
-  sectionSubtext: {
-    fontSize: 13,
-    color: colors.sage,
-    marginBottom: 12,
-    marginTop: -8,
-  },
-  topicInput: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: colors.offWhite,
-  },
-  optionsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  optionButton: {
-    flex: 1,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  optionButtonSelected: {
-    borderColor: colors.greenGlow,
-    backgroundColor: colors.greenGlow + '20',
-  },
-  optionText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  optionTextSelected: {
-    color: colors.greenGlow,
-  },
-  roundButton: {
-    flex: 1,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  roundNumber: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  roundLabel: {
-    fontSize: 12,
-    color: colors.sage,
-    marginTop: 4,
-  },
-  loader: {
-    marginTop: 20,
-  },
-  noFriendsContainer: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-  },
-  noFriendsText: {
-    fontSize: 16,
-    color: colors.sage,
-    marginTop: 12,
-    marginBottom: 16,
-  },
-  addFriendsButton: {
-    backgroundColor: colors.greenGlow,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  addFriendsButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.charcoal,
-  },
-  friendsList: {
-    gap: 12,
-  },
-  friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  friendCardSelected: {
-    borderColor: colors.greenGlow,
-    backgroundColor: colors.greenGlow + '15',
-  },
-  friendAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.charcoal,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  friendAvatarSelected: {
-    backgroundColor: colors.greenGlow + '30',
-  },
-  friendInitial: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  friendInfo: {
-    flex: 1,
-  },
-  friendName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  friendEmail: {
-    fontSize: 13,
-    color: colors.sage,
-    marginTop: 2,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    paddingBottom: 34,
-    backgroundColor: colors.charcoal,
-    borderTopWidth: 1,
-    borderTopColor: colors.darkGrey,
-  },
-  createButton: {
-    backgroundColor: colors.greenGlow,
-    borderRadius: 12,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 8,
-  },
-  createButtonDisabled: {
-    opacity: 0.5,
-  },
-  createButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.charcoal,
-  },
-  preparingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  preparingCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 32,
-    marginHorizontal: 24,
-    alignItems: 'center',
-    maxWidth: 320,
-  },
-  preparingTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.offWhite,
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  preparingSubtitle: {
-    fontSize: 14,
-    color: colors.sage,
-    marginTop: 8,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-});

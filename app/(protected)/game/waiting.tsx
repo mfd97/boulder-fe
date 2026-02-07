@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,11 @@ import Animated, {
   Easing,
   withSequence,
 } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useSocket } from '@/contexts/SocketContext';
 
 export default function WaitingRoomScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{
     gameId?: string;
@@ -70,6 +71,30 @@ export default function WaitingRoomScreen() {
     transform: [{ scale: pulseScale.value }],
     opacity: pulseOpacity.value,
   }));
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background },
+        header: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 16, paddingVertical: 12 },
+        cancelButton: { padding: 8 },
+        cancelText: { fontSize: 16, color: colors.sage },
+        content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingBottom: 60 },
+        waitingContainer: { width: 140, height: 140, justifyContent: 'center', alignItems: 'center', marginBottom: 32 },
+        pulseOuter: { position: 'absolute', width: 140, height: 140, borderRadius: 70, backgroundColor: colors.greenGlow + '30' },
+        waitingIcon: { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.darkGrey, justifyContent: 'center', alignItems: 'center' },
+        waitingTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+        waitingSubtitle: { fontSize: 16, color: colors.sage, marginBottom: 32 },
+        detailsCard: { width: '100%', backgroundColor: colors.darkGrey, borderRadius: 16, padding: 20, marginBottom: 24 },
+        detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+        detailLabel: { fontSize: 14, color: colors.sage },
+        detailValue: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+        divider: { height: 1, backgroundColor: colors.background, marginVertical: 4 },
+        tipContainer: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.darkGrey + '80', borderRadius: 12, padding: 16, gap: 12 },
+        tipText: { flex: 1, fontSize: 13, color: colors.sage, lineHeight: 20 },
+      }),
+    [colors]
+  );
 
   // Listen for game events
   useEffect(() => {
@@ -194,103 +219,3 @@ export default function WaitingRoomScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  cancelButton: {
-    padding: 8,
-  },
-  cancelText: {
-    fontSize: 16,
-    color: colors.sage,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 60,
-  },
-  waitingContainer: {
-    width: 140,
-    height: 140,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  pulseOuter: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.greenGlow + '30',
-  },
-  waitingIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.darkGrey,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  waitingTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.offWhite,
-    marginBottom: 8,
-  },
-  waitingSubtitle: {
-    fontSize: 16,
-    color: colors.sage,
-    marginBottom: 32,
-  },
-  detailsCard: {
-    width: '100%',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: colors.sage,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.charcoal,
-    marginVertical: 4,
-  },
-  tipContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.darkGrey + '80',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 13,
-    color: colors.sage,
-    lineHeight: 20,
-  },
-});

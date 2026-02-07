@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,11 +16,12 @@ import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { getPendingInvitations, getGameHistory, GameInvitation, GameHistoryItem } from '@/api/game';
 import { useSocket } from '@/contexts/SocketContext';
 import EmptyState from '@/components/EmptyState';
-import { cardStyle } from '@/components/Card';
+import { useCardStyle } from '@/components/Card';
 
 // Animated pressable for buttons
 function AnimatedButton({ 
@@ -57,6 +58,9 @@ function AnimatedButton({
 }
 
 export default function GameHubScreen() {
+  const { colors } = useTheme();
+  const cardStyle = useCardStyle();
+  const styles = useMemo(() => makeStyles(colors, cardStyle), [colors, cardStyle]);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { 
@@ -160,7 +164,7 @@ export default function GameHubScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.offWhite} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Multiplayer</Text>
         <View style={styles.headerSpacer} />
@@ -297,204 +301,46 @@ export default function GameHubScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  challengeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...cardStyle,
-    marginBottom: 28,
-    borderWidth: 2,
-    borderColor: colors.greenGlow + '40',
-  },
-  challengeIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.greenGlow + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  challengeContent: {
-    flex: 1,
-  },
-  challengeTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  challengeSubtitle: {
-    fontSize: 14,
-    color: colors.sage,
-    marginTop: 4,
-  },
-  section: {
-    marginBottom: 28,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.sage,
-    letterSpacing: 1.5,
-    marginBottom: 12,
-  },
-  loader: {
-    marginVertical: 20,
-  },
-  emptyCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 20,
-    gap: 10,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.sage,
-  },
-  invitationsList: {
-    gap: 12,
-  },
-  invitationCard: {
-    ...cardStyle,
-  },
-  invitationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  hostAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.greenGlow + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  hostInitial: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.greenGlow,
-  },
-  invitationInfo: {
-    flex: 1,
-  },
-  hostName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  invitationDetails: {
-    fontSize: 13,
-    color: colors.sage,
-    marginTop: 2,
-  },
-  invitationActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  declineButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.error + '20',
-    borderRadius: 10,
-    paddingVertical: 12,
-  },
-  acceptButton: {
-    flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: colors.greenGlow,
-    borderRadius: 10,
-    paddingVertical: 12,
-  },
-  acceptText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.charcoal,
-  },
-  historyList: {
-    gap: 10,
-  },
-  historyCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 14,
-  },
-  historyLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  resultIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  historyInfo: {
-    flex: 1,
-  },
-  historyTopic: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  historyOpponent: {
-    fontSize: 13,
-    color: colors.sage,
-    marginTop: 2,
-  },
-  historyRight: {
-    alignItems: 'flex-end',
-  },
-  historyScore: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  historyResult: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-});
+function makeStyles(colors: ThemeColors, cardStyle: ReturnType<typeof useCardStyle>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+    backButton: { padding: 8 },
+    headerTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+    headerSpacer: { width: 40 },
+    scrollView: { flex: 1 },
+    scrollContent: { padding: 20 },
+    challengeButton: { flexDirection: 'row', alignItems: 'center', ...cardStyle, marginBottom: 28, borderWidth: 2, borderColor: colors.greenGlow + '40' },
+    challengeIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.greenGlow + '20', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+    challengeContent: { flex: 1 },
+    challengeTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+    challengeSubtitle: { fontSize: 14, color: colors.sage, marginTop: 4 },
+    section: { marginBottom: 28 },
+    sectionLabel: { fontSize: 12, fontWeight: '700', color: colors.sage, letterSpacing: 1.5, marginBottom: 12 },
+    loader: { marginVertical: 20 },
+    emptyCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.darkGrey, borderRadius: 12, padding: 20, gap: 10 },
+    emptyText: { fontSize: 14, color: colors.sage },
+    invitationsList: { gap: 12 },
+    invitationCard: { ...cardStyle },
+    invitationHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+    hostAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.greenGlow + '20', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    hostInitial: { fontSize: 18, fontWeight: '700', color: colors.greenGlow },
+    invitationInfo: { flex: 1 },
+    hostName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    invitationDetails: { fontSize: 13, color: colors.sage, marginTop: 2 },
+    invitationActions: { flexDirection: 'row', gap: 12 },
+    declineButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.error + '20', borderRadius: 10, paddingVertical: 12 },
+    acceptButton: { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.greenGlow, borderRadius: 10, paddingVertical: 12 },
+    acceptText: { fontSize: 14, fontWeight: '600', color: colors.charcoal },
+    historyList: { gap: 10 },
+    historyCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.darkGrey, borderRadius: 12, padding: 14 },
+    historyLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    resultIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+    historyInfo: { flex: 1 },
+    historyTopic: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+    historyOpponent: { fontSize: 13, color: colors.sage, marginTop: 2 },
+    historyRight: { alignItems: 'flex-end' },
+    historyScore: { fontSize: 16, fontWeight: '700' },
+    historyResult: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useCallback } from 'react';
+import React, { useContext, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { router } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { login } from '@/api/auth';
@@ -64,6 +64,8 @@ function AnimatedButton({
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
+  const { colors } = useTheme();
+  const styles = useLoginStyles(colors);
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState<string | null>(null)
@@ -227,11 +229,11 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
+function useLoginStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  return useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background },
   keyboardView: {
     flex: 1,
   },
@@ -267,18 +269,18 @@ const styles = StyleSheet.create({
   brandText: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: colors.offWhite,
+    color: colors.textPrimary,
     letterSpacing: 1,
   },
   welcomeText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: colors.offWhite,
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.7,
     marginBottom: 40,
   },
@@ -328,7 +330,7 @@ const styles = StyleSheet.create({
   },
   signUpText: {
     fontSize: 14,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.8,
   },
   signUpLink: {
@@ -337,4 +339,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
-});
+      }),
+    [colors]
+  );
+}

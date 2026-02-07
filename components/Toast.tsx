@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 
@@ -14,7 +14,35 @@ interface ToastProps {
 }
 
 export default function Toast({ message, visible, onHide }: ToastProps) {
+  const { colors } = useTheme();
   const opacity = useSharedValue(0);
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          position: 'absolute',
+          bottom: spacing.section + 60,
+          left: spacing.xl,
+          right: spacing.xl,
+          alignItems: 'center',
+          zIndex: 1000,
+        },
+        toast: {
+          backgroundColor: colors.darkGrey,
+          paddingVertical: spacing.lg,
+          paddingHorizontal: spacing.xxl,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: colors.greenGlow + '40',
+          maxWidth: '100%',
+        },
+        text: {
+          ...typography.bodySmall,
+          color: colors.textPrimary,
+        },
+      }),
+    [colors]
+  );
 
   useEffect(() => {
     if (!visible || !message) return;
@@ -41,27 +69,3 @@ export default function Toast({ message, visible, onHide }: ToastProps) {
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: spacing.section + 60,
-    left: spacing.xl,
-    right: spacing.xl,
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  toast: {
-    backgroundColor: colors.darkGrey,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xxl,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.greenGlow + '40',
-    maxWidth: '100%',
-  },
-  text: {
-    ...typography.bodySmall,
-    color: colors.offWhite,
-  },
-});

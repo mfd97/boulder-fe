@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -22,7 +22,8 @@ import Animated, {
   FadeIn,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { colors } from "@/constants/colors";
+import type { ThemeColors } from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { typography } from "@/constants/typography";
 import { spacing } from "@/constants/spacing";
 import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
@@ -83,6 +84,8 @@ function AnimatedPressable({
 }
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   // Fetch streak data
   const { data: streakData, isLoading } = useQuery({
     queryKey: ['streak'],
@@ -380,10 +383,11 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: colors.charcoal,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
@@ -401,7 +405,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     ...typography.caption,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     marginBottom: spacing.lg,
     letterSpacing: 1,
   },
@@ -415,12 +419,12 @@ const styles = StyleSheet.create({
   },
   streakNumber: {
     ...typography.display,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   streakSubtext: {
     ...typography.bodySmall,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.8,
   },
   progressCircleContainer: {
@@ -458,14 +462,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.titleSmall,
     fontSize: 18,
-    color: colors.offWhite,
+    color: colors.textPrimary,
   },
   masteryEmptyCard: {
     paddingVertical: spacing.sm,
   },
   cardLabel: {
     ...typography.label,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.7,
     letterSpacing: 1,
     marginBottom: spacing.md,
@@ -478,7 +482,7 @@ const styles = StyleSheet.create({
   },
   masterySubject: {
     ...typography.titleSmall,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     flex: 1,
   },
   starsContainer: {
@@ -499,7 +503,7 @@ const styles = StyleSheet.create({
   },
   masteryLevel: {
     ...typography.label,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.7,
     letterSpacing: 1,
     marginBottom: spacing.sm,
@@ -525,7 +529,7 @@ const styles = StyleSheet.create({
   },
   leaderboardLabel: {
     ...typography.caption,
-    color: colors.offWhite,
+    color: colors.textPrimary,
     opacity: 0.7,
     letterSpacing: 1,
     marginTop: spacing.xs,
@@ -554,7 +558,7 @@ const styles = StyleSheet.create({
   pendingBadgeText: {
     fontSize: 11,
     fontWeight: "700",
-    color: colors.offWhite,
+    color: colors.textPrimary,
   },
   actionButtons: {
     gap: spacing.md,
@@ -599,7 +603,7 @@ const styles = StyleSheet.create({
   gameInviteBadgeText: {
     ...typography.caption,
     fontWeight: "700",
-    color: colors.offWhite,
+    color: colors.textPrimary,
   },
   startQuizButton: {
     backgroundColor: colors.sage,
@@ -617,4 +621,5 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     letterSpacing: 0.5,
   },
-});
+  });
+}

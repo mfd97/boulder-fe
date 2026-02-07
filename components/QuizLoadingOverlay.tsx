@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,11 +36,91 @@ const LOADING_TIPS = [
 ];
 
 export default function QuizLoadingOverlay({ topic, visible }: QuizLoadingOverlayProps) {
+  const { colors } = useTheme();
   const [currentStep, setCurrentStep] = useState(0);
   const [currentTip, setCurrentTip] = useState(0);
   const spinValue = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const stepProgress = useRef(new Animated.Value(0)).current;
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        overlay: {
+          ...StyleSheet.absoluteFillObject,
+          backgroundColor: colors.background,
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+        },
+        content: { alignItems: 'center', paddingHorizontal: 32, width: '100%' },
+        iconContainer: {
+          width: 100,
+          height: 100,
+          borderRadius: 50,
+          backgroundColor: colors.darkGrey,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 32,
+        },
+        topicLabel: { fontSize: 14, color: colors.sage, marginBottom: 8 },
+        topicText: {
+          fontSize: 22,
+          fontWeight: '600',
+          color: colors.textPrimary,
+          textAlign: 'center',
+          marginBottom: 40,
+          maxWidth: SCREEN_WIDTH * 0.8,
+        },
+        stepsContainer: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 24,
+          marginBottom: 16,
+        },
+        step: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: colors.darkGrey,
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderWidth: 2,
+          borderColor: 'transparent',
+        },
+        stepActive: {
+          borderColor: colors.greenGlow,
+          backgroundColor: colors.greenGlow + '1A',
+        },
+        progressBarContainer: {
+          width: '80%',
+          height: 4,
+          backgroundColor: colors.darkGrey,
+          borderRadius: 2,
+          marginBottom: 24,
+          overflow: 'hidden',
+        },
+        progressBar: { height: '100%', backgroundColor: colors.greenGlow, borderRadius: 2 },
+        stepText: {
+          fontSize: 18,
+          fontWeight: '500',
+          color: colors.textPrimary,
+          marginBottom: 48,
+        },
+        tipContainer: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          gap: 10,
+          backgroundColor: colors.darkGrey,
+          padding: 16,
+          borderRadius: 12,
+          maxWidth: SCREEN_WIDTH * 0.85,
+        },
+        tipText: { flex: 1, fontSize: 14, color: colors.sage, lineHeight: 20 },
+        timeWarning: { marginTop: 32, fontSize: 12, color: colors.sage, opacity: 0.7 },
+      }),
+    [colors]
+  );
 
   // Reset when visibility changes
   useEffect(() => {
@@ -177,100 +257,3 @@ export default function QuizLoadingOverlay({ topic, visible }: QuizLoadingOverla
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.charcoal,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  content: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    width: '100%',
-  },
-  iconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.darkGrey,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  topicLabel: {
-    fontSize: 14,
-    color: colors.sage,
-    marginBottom: 8,
-  },
-  topicText: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: colors.offWhite,
-    textAlign: 'center',
-    marginBottom: 40,
-    maxWidth: SCREEN_WIDTH * 0.8,
-  },
-  stepsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 24,
-    marginBottom: 16,
-  },
-  step: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.darkGrey,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  stepActive: {
-    borderColor: colors.greenGlow,
-    backgroundColor: 'rgba(159, 242, 148, 0.1)',
-  },
-  progressBarContainer: {
-    width: '80%',
-    height: 4,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 2,
-    marginBottom: 24,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: colors.greenGlow,
-    borderRadius: 2,
-  },
-  stepText: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: colors.offWhite,
-    marginBottom: 48,
-  },
-  tipContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: colors.darkGrey,
-    padding: 16,
-    borderRadius: 12,
-    maxWidth: SCREEN_WIDTH * 0.85,
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.sage,
-    lineHeight: 20,
-  },
-  timeWarning: {
-    marginTop: 32,
-    fontSize: 12,
-    color: colors.sage,
-    opacity: 0.7,
-  },
-});

@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, StyleSheet, Animated, ViewStyle } from 'react-native';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface SkeletonProps {
   width: number | string;
@@ -10,51 +10,65 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width, height, borderRadius = 8, style }: SkeletonProps) {
+  const { colors } = useTheme();
   const shimmerAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmerAnim, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0, duration: 1000, useNativeDriver: true }),
       ])
     );
     animation.start();
-
     return () => animation.stop();
   }, []);
 
-  const opacity = shimmerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.6],
-  });
+  const opacity = shimmerAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.6] });
 
   return (
     <Animated.View
-      style={[
-        {
-          width,
-          height,
-          borderRadius,
-          backgroundColor: colors.darkGrey,
-          opacity,
-        },
-        style,
-      ]}
+      style={[{ width: width as ViewStyle['width'], height, borderRadius, backgroundColor: colors.darkGrey, opacity }, style]}
     />
   );
 }
 
-// Pre-built skeleton layouts for common components
+function createSkeletonStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  return StyleSheet.create({
+    streakContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
+    streakLeft: { flex: 1 },
+    masteryContainer: { marginBottom: 32 },
+    masteryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+    masteryCard: { backgroundColor: colors.darkGrey, borderRadius: 16, padding: 20 },
+    masteryRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+    starsRow: { flexDirection: 'row', gap: 4 },
+    masteryStats: { flexDirection: 'row', alignItems: 'center' },
+    waveRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 14, marginTop: 8 },
+    historyItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: colors.darkGrey,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+    },
+    historyLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    topicCard: {
+      backgroundColor: colors.darkGrey,
+      borderRadius: 16,
+      padding: 16,
+      width: '48%',
+      aspectRatio: 1,
+      marginBottom: 12,
+    },
+    topicMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 'auto' },
+  });
+}
+
 export function StreakSkeleton() {
+  const { colors } = useTheme();
+  const skeletonStyles = useMemo(() => createSkeletonStyles(colors), [colors]);
   return (
     <View style={skeletonStyles.streakContainer}>
       <View style={skeletonStyles.streakLeft}>
@@ -67,6 +81,8 @@ export function StreakSkeleton() {
 }
 
 export function MasterySkeleton() {
+  const { colors } = useTheme();
+  const skeletonStyles = useMemo(() => createSkeletonStyles(colors), [colors]);
   return (
     <View style={skeletonStyles.masteryContainer}>
       <View style={skeletonStyles.masteryHeader}>
@@ -99,6 +115,8 @@ export function MasterySkeleton() {
 }
 
 export function HistoryItemSkeleton() {
+  const { colors } = useTheme();
+  const skeletonStyles = useMemo(() => createSkeletonStyles(colors), [colors]);
   return (
     <View style={skeletonStyles.historyItem}>
       <View style={skeletonStyles.historyLeft}>
@@ -114,6 +132,8 @@ export function HistoryItemSkeleton() {
 }
 
 export function TopicCardSkeleton() {
+  const { colors } = useTheme();
+  const skeletonStyles = useMemo(() => createSkeletonStyles(colors), [colors]);
   return (
     <View style={skeletonStyles.topicCard}>
       <Skeleton width={48} height={48} borderRadius={12} />
@@ -126,78 +146,3 @@ export function TopicCardSkeleton() {
     </View>
   );
 }
-
-const skeletonStyles = StyleSheet.create({
-  streakContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  streakLeft: {
-    flex: 1,
-  },
-  masteryContainer: {
-    marginBottom: 32,
-  },
-  masteryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  masteryCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 20,
-  },
-  masteryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  masteryStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  waveRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 4,
-    height: 14,
-    marginTop: 8,
-  },
-  historyItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  historyLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  topicCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 16,
-    width: '48%',
-    aspectRatio: 1,
-    marginBottom: 12,
-  },
-  topicMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 'auto',
-  },
-});

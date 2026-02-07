@@ -11,7 +11,8 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
-import { colors } from "@/constants/colors";
+import type { ThemeColors } from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { submitQuizResult } from "@/api/quiz";
 
@@ -32,6 +33,8 @@ interface QuizData {
 }
 
 export default function QuizScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const queryClient = useQueryClient();
   const { quizData: quizDataParam } = useLocalSearchParams<{ quizData: string }>();
@@ -228,169 +231,36 @@ export default function QuizScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorText: {
-    color: colors.offWhite,
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: colors.sage,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: colors.charcoal,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  progressLabel: {
-    color: colors.offWhite,
-    fontSize: 11,
-    fontWeight: "600",
-    letterSpacing: 1,
-    marginRight: 12,
-  },
-  progressBarContainer: {
-    flex: 1,
-    height: 6,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 3,
-    marginRight: 12,
-  },
-  progressBar: {
-    height: "100%",
-    backgroundColor: colors.sage,
-    borderRadius: 3,
-  },
-  progressPercent: {
-    color: colors.charcoal,
-    fontSize: 12,
-    fontWeight: "700",
-    backgroundColor: colors.sage,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  quizTitle: {
-    color: colors.offWhite,
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  quizSubtitle: {
-    color: colors.sage,
-    fontSize: 11,
-    fontWeight: "500",
-    letterSpacing: 1.5,
-    textAlign: "center",
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  questionContainer: {
-    marginBottom: 24,
-  },
-  questionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
-  },
-  questionText: {
-    color: colors.offWhite,
-    fontSize: 17,
-    fontWeight: "600",
-    lineHeight: 24,
-    flex: 1,
-    marginRight: 12,
-  },
-  questionNumber: {
-    color: colors.sage,
-    fontSize: 13,
-    fontWeight: "500",
-    opacity: 0.6,
-  },
-  option: {
-    backgroundColor: colors.darkGrey,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  optionSelected: {
-    backgroundColor: colors.sage,
-    borderColor: colors.sage,
-  },
-  optionText: {
-    color: colors.offWhite,
-    fontSize: 15,
-    flex: 1,
-  },
-  optionTextSelected: {
-    color: colors.charcoal,
-    fontWeight: "600",
-  },
-  checkmark: {
-    marginLeft: 8,
-  },
-  submitButton: {
-    backgroundColor: colors.greenGlow,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 16,
-    alignItems: "center",
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitText: {
-    color: colors.charcoal,
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  quitButton: {
-    marginTop: 16,
-    marginBottom: 20,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  quitText: {
-    color: colors.sage,
-    fontSize: 15,
-    fontWeight: "500",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+    errorText: { color: colors.textPrimary, fontSize: 18, marginBottom: 20 },
+    backButton: { backgroundColor: colors.sage, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 },
+    backButtonText: { color: colors.charcoal, fontSize: 16, fontWeight: "600" },
+    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 },
+    progressContainer: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
+    progressLabel: { color: colors.textPrimary, fontSize: 11, fontWeight: "600", letterSpacing: 1, marginRight: 12 },
+    progressBarContainer: { flex: 1, height: 6, backgroundColor: colors.darkGrey, borderRadius: 3, marginRight: 12 },
+    progressBar: { height: "100%", backgroundColor: colors.sage, borderRadius: 3 },
+    progressPercent: { color: colors.charcoal, fontSize: 12, fontWeight: "700", backgroundColor: colors.sage, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, overflow: "hidden" },
+    quizTitle: { color: colors.textPrimary, fontSize: 28, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+    quizSubtitle: { color: colors.sage, fontSize: 11, fontWeight: "500", letterSpacing: 1.5, textAlign: "center" },
+    scrollView: { flex: 1 },
+    content: { paddingHorizontal: 20, paddingBottom: 40 },
+    questionContainer: { marginBottom: 24 },
+    questionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 },
+    questionText: { color: colors.textPrimary, fontSize: 17, fontWeight: "600", lineHeight: 24, flex: 1, marginRight: 12 },
+    questionNumber: { color: colors.sage, fontSize: 13, fontWeight: "500", opacity: 0.6 },
+    option: { backgroundColor: colors.darkGrey, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 10, marginBottom: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: "transparent" },
+    optionSelected: { backgroundColor: colors.sage, borderColor: colors.sage },
+    optionText: { color: colors.textPrimary, fontSize: 15, flex: 1 },
+    optionTextSelected: { color: colors.charcoal, fontWeight: "600" },
+    checkmark: { marginLeft: 8 },
+    submitButton: { backgroundColor: colors.greenGlow, paddingVertical: 16, borderRadius: 12, marginTop: 16, alignItems: "center" },
+    submitButtonDisabled: { opacity: 0.5 },
+    submitText: { color: colors.charcoal, fontSize: 16, fontWeight: "700", letterSpacing: 0.5 },
+    quitButton: { marginTop: 16, marginBottom: 20, alignItems: "center", paddingVertical: 12 },
+    quitText: { color: colors.sage, fontSize: 15, fontWeight: "500" },
+  });
+}

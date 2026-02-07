@@ -1,7 +1,7 @@
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 function triggerTabHaptic() {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -10,6 +10,7 @@ function triggerTabHaptic() {
 export default function TabsLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const { colors } = useTheme();
 
   // Check if we're on a nested screen within a tab
   // segments looks like: ['(protected)', '(tabs)', 'quiz', 'CreateQuiz']
@@ -22,11 +23,11 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.greenGlow,
-        tabBarInactiveTintColor: colors.offWhite,
+        tabBarInactiveTintColor: colors.sage,
         tabBarStyle: {
-          backgroundColor: colors.charcoal,
+          backgroundColor: colors.background,
           borderTopWidth: 1,
-          borderTopColor: 'rgba(240, 237, 232, 0.12)',
+          borderTopColor: colors.sage + '40',
         },
       }}
     >

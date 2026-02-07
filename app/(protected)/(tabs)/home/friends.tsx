@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   sendFriendRequest,
   getPendingRequests,
@@ -29,6 +30,8 @@ import {
 } from '@/api/friends';
 
 export default function FriendsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState('');
@@ -128,7 +131,7 @@ export default function FriendsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.offWhite} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Friends</Text>
         <View style={styles.placeholder} />
@@ -341,209 +344,46 @@ export default function FriendsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  placeholder: {
-    width: 32,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  addSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.offWhite,
-    marginBottom: 12,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  emailInput: {
-    flex: 1,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: colors.offWhite,
-  },
-  sendButton: {
-    backgroundColor: colors.greenGlow,
-    borderRadius: 12,
-    width: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonDisabled: {
-    opacity: 0.6,
-  },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    gap: 8,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: colors.darkGrey,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  activeTab: {
-    backgroundColor: colors.greenGlow,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.sage,
-  },
-  activeTabText: {
-    color: colors.charcoal,
-  },
-  badge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.error,
-  },
-  loadingContainer: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  listContainer: {
-    paddingHorizontal: 20,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.offWhite,
-    marginTop: 16,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: colors.sage,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  requestCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-  },
-  avatarContainer: {
-    marginRight: 14,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.greenGlow,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.charcoal,
-  },
-  friendInfo: {
-    flex: 1,
-  },
-  friendName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  friendEmail: {
-    fontSize: 13,
-    color: colors.sage,
-    marginTop: 2,
-  },
-  removeButton: {
-    padding: 4,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  acceptButton: {
-    backgroundColor: colors.greenGlow,
-    borderRadius: 10,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  declineButton: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 10,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.sage,
-  },
-  pendingBadge: {
-    backgroundColor: 'rgba(159, 242, 148, 0.2)',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  pendingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.greenGlow,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16 },
+    backButton: { padding: 4 },
+    headerTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
+    placeholder: { width: 32 },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingBottom: 40 },
+    addSection: { paddingHorizontal: 20, marginBottom: 24 },
+    sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 12 },
+    inputRow: { flexDirection: 'row', gap: 12 },
+    emailInput: { flex: 1, backgroundColor: colors.darkGrey, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, color: colors.textPrimary },
+    sendButton: { backgroundColor: colors.greenGlow, borderRadius: 12, width: 52, alignItems: 'center', justifyContent: 'center' },
+    sendButtonDisabled: { opacity: 0.6 },
+    tabs: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 16, gap: 8 },
+    tab: { flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.darkGrey, alignItems: 'center', position: 'relative' },
+    activeTab: { backgroundColor: colors.greenGlow },
+    tabText: { fontSize: 13, fontWeight: '600', color: colors.sage },
+    activeTabText: { color: colors.charcoal },
+    badge: { position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.error },
+    loadingContainer: { paddingVertical: 60, alignItems: 'center' },
+    listContainer: { paddingHorizontal: 20 },
+    emptyState: { alignItems: 'center', paddingVertical: 60 },
+    emptyText: { fontSize: 18, fontWeight: '600', color: colors.textPrimary, marginTop: 16 },
+    emptySubtext: { fontSize: 14, color: colors.sage, marginTop: 8, textAlign: 'center' },
+    friendCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.darkGrey, borderRadius: 16, padding: 16, marginBottom: 12 },
+    requestCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.darkGrey, borderRadius: 16, padding: 16, marginBottom: 12 },
+    avatarContainer: { marginRight: 14 },
+    avatar: { width: 48, height: 48, borderRadius: 24 },
+    avatarPlaceholder: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.greenGlow, alignItems: 'center', justifyContent: 'center' },
+    avatarText: { fontSize: 20, fontWeight: '700', color: colors.charcoal },
+    friendInfo: { flex: 1 },
+    friendName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    friendEmail: { fontSize: 13, color: colors.sage, marginTop: 2 },
+    removeButton: { padding: 4 },
+    actionButtons: { flexDirection: 'row', gap: 8 },
+    acceptButton: { backgroundColor: colors.greenGlow, borderRadius: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    declineButton: { backgroundColor: colors.darkGrey, borderRadius: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.sage },
+    pendingBadge: { backgroundColor: colors.greenGlow + '33', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+    pendingText: { fontSize: 12, fontWeight: '600', color: colors.greenGlow },
+  });
+}

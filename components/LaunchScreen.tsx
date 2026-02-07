@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -8,7 +8,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import AnimatedMeshGradient from './AnimatedMeshGradient';
 
 const { width, height } = Dimensions.get('window');
@@ -18,11 +18,36 @@ interface LaunchScreenProps {
 }
 
 export default function LaunchScreen({ onAnimationComplete }: LaunchScreenProps) {
+  const { colors } = useTheme();
   const logoScale = useSharedValue(0);
   const logoOpacity = useSharedValue(0);
   const textOpacity = useSharedValue(0);
   const textTranslateY = useSharedValue(20);
   const containerOpacity = useSharedValue(1);
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: { flex: 1, backgroundColor: colors.background },
+        content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+        logoContainer: { marginBottom: 24 },
+        logoIcon: {
+          width: 80,
+          height: 80,
+          borderRadius: 20,
+          backgroundColor: colors.greenGlow,
+          justifyContent: 'center',
+          alignItems: 'center',
+          shadowColor: colors.greenGlow,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 20,
+          elevation: 10,
+        },
+        logoText: { fontSize: 48, fontWeight: 'bold', color: colors.charcoal },
+        appName: { fontSize: 36, fontWeight: 'bold', color: colors.textPrimary, letterSpacing: 4 },
+      }),
+    [colors]
+  );
 
   useEffect(() => {
     // Logo animation - scale and fade in
@@ -116,44 +141,3 @@ export default function LaunchScreen({ onAnimationComplete }: LaunchScreenProps)
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    marginBottom: 24,
-  },
-  logoIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    backgroundColor: colors.greenGlow,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: colors.greenGlow,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logoText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: colors.charcoal,
-  },
-  appName: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: colors.offWhite,
-    letterSpacing: 4,
-  },
-});

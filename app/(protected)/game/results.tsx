@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,8 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import ConfettiCannon from 'react-native-confetti-cannon';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { getGameById } from '@/api/game';
 import * as SecureStore from 'expo-secure-store';
 import { jwtDecode } from 'jwt-decode';
@@ -56,6 +57,8 @@ function AnimatedButton({
 }
 
 export default function GameResultsScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const params = useLocalSearchParams<{ gameId: string }>();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -271,137 +274,33 @@ export default function GameResultsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 18,
-    color: colors.sage,
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  resultIconContainer: {
-    marginBottom: 24,
-  },
-  resultIconBg: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resultTitle: {
-    fontSize: 40,
-    fontWeight: '800',
-    marginBottom: 8,
-  },
-  resultSubtitle: {
-    fontSize: 18,
-    color: colors.sage,
-    marginBottom: 32,
-  },
-  scoreCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    marginBottom: 20,
-  },
-  scoreSection: {
-    flex: 1,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  playerLabel: {
-    fontSize: 14,
-    color: colors.sage,
-    marginBottom: 8,
-  },
-  finalScore: {
-    fontSize: 48,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  winnerScore: {
-    color: '#FFD700',
-  },
-  winnerBadge: {
-    position: 'absolute',
-    top: -5,
-    right: 20,
-  },
-  scoreDivider: {
-    paddingHorizontal: 16,
-  },
-  vsText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.sage,
-  },
-  statsCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
-    marginBottom: 32,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: colors.sage,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  statDivider: {
-    height: 1,
-    backgroundColor: colors.charcoal,
-    marginVertical: 4,
-  },
-  buttonsContainer: {
-    width: '100%',
-    gap: 12,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.greenGlow,
-    borderRadius: 12,
-    paddingVertical: 16,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.charcoal,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    color: colors.sage,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingText: { fontSize: 18, color: colors.sage },
+    content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+    resultIconContainer: { marginBottom: 24 },
+    resultIconBg: { width: 140, height: 140, borderRadius: 70, justifyContent: 'center', alignItems: 'center' },
+    resultTitle: { fontSize: 40, fontWeight: '800', marginBottom: 8 },
+    resultSubtitle: { fontSize: 18, color: colors.sage, marginBottom: 32 },
+    scoreCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.darkGrey, borderRadius: 20, padding: 24, width: '100%', marginBottom: 20 },
+    scoreSection: { flex: 1, alignItems: 'center', position: 'relative' },
+    playerLabel: { fontSize: 14, color: colors.sage, marginBottom: 8 },
+    finalScore: { fontSize: 48, fontWeight: '700', color: colors.textPrimary },
+    winnerScore: { color: '#FFD700' },
+    winnerBadge: { position: 'absolute', top: -5, right: 20 },
+    scoreDivider: { paddingHorizontal: 16 },
+    vsText: { fontSize: 24, fontWeight: '700', color: colors.sage },
+    statsCard: { backgroundColor: colors.darkGrey, borderRadius: 16, padding: 20, width: '100%', marginBottom: 32 },
+    statRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+    statLabel: { fontSize: 14, color: colors.sage },
+    statValue: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    statDivider: { height: 1, backgroundColor: colors.background, marginVertical: 4 },
+    buttonsContainer: { width: '100%', gap: 12 },
+    primaryButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.greenGlow, borderRadius: 12, paddingVertical: 16 },
+    primaryButtonText: { fontSize: 16, fontWeight: '700', color: colors.charcoal },
+    secondaryButton: { alignItems: 'center', paddingVertical: 16 },
+    secondaryButtonText: { fontSize: 16, color: colors.sage },
+  });
+}

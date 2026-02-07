@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from "@/constants/colors";
+import type { ThemeColors } from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { createQuiz } from "@/api/quiz";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
@@ -26,10 +27,11 @@ const DIFFICULTY_OPTIONS = [
 ];
 
 export default function StartQuizScreen() {
-  // 1. Hooks
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const [topic, setTopic] = useState<string>("");
-  const [selectedDifficulty, setSelectedDifficulty] = useState(DIFFICULTY_OPTIONS[0]); // Default: Beginner
+  const [selectedDifficulty, setSelectedDifficulty] = useState(DIFFICULTY_OPTIONS[0]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const { mutate, isPending } = useMutation({
@@ -80,7 +82,7 @@ export default function StartQuizScreen() {
           onPress={() => router.back()}
           disabled={isPending}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.offWhite} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>New Quiz</Text>
         <View style={styles.headerSpacer} />
@@ -110,7 +112,7 @@ export default function StartQuizScreen() {
         activeOpacity={0.7}
       >
         <Text style={styles.dropdownText}>{selectedDifficulty.label}</Text>
-        <Ionicons name="chevron-down" size={20} color={colors.offWhite} />
+        <Ionicons name="chevron-down" size={20} color={colors.textPrimary} />
       </TouchableOpacity>
 
       {/* Dropdown Modal */}
@@ -169,130 +171,28 @@ export default function StartQuizScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.darkGrey,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.offWhite,
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 24,
-    color: colors.offWhite,
-    marginBottom: 8,
-    fontWeight: "600",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.sage,
-    marginBottom: 24,
-  },
-  input: {
-    backgroundColor: colors.darkGrey,
-    color: colors.offWhite,
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-    fontSize: 16,
-  },
-  dropdownLabel: {
-    fontSize: 14,
-    color: colors.sage,
-    marginBottom: 8,
-  },
-  dropdown: {
-    backgroundColor: colors.darkGrey,
-    padding: 14,
-    borderRadius: 8,
-    marginBottom: 24,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dropdownText: {
-    color: colors.offWhite,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: colors.greenGlow,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: colors.charcoal,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 20,
-    width: "100%",
-    maxWidth: 320,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: colors.offWhite,
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  optionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: colors.charcoal,
-  },
-  optionItemSelected: {
-    backgroundColor: "rgba(159, 242, 148, 0.15)",
-    borderWidth: 1,
-    borderColor: colors.greenGlow,
-  },
-  optionText: {
-    fontSize: 16,
-    color: colors.offWhite,
-  },
-  optionTextSelected: {
-    color: colors.greenGlow,
-    fontWeight: "600",
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.darkGrey },
+    backButton: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
+    headerTitle: { fontSize: 18, fontWeight: "600", color: colors.textPrimary },
+    headerSpacer: { width: 40 },
+    content: { flex: 1, padding: 16, justifyContent: "center" },
+    title: { fontSize: 24, color: colors.textPrimary, marginBottom: 8, fontWeight: "600" },
+    subtitle: { fontSize: 16, color: colors.sage, marginBottom: 24 },
+    input: { backgroundColor: colors.darkGrey, color: colors.textPrimary, padding: 12, borderRadius: 8, marginBottom: 20, fontSize: 16 },
+    dropdownLabel: { fontSize: 14, color: colors.sage, marginBottom: 8 },
+    dropdown: { backgroundColor: colors.darkGrey, padding: 14, borderRadius: 8, marginBottom: 24, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    dropdownText: { color: colors.textPrimary, fontSize: 16 },
+    button: { backgroundColor: colors.greenGlow, padding: 16, borderRadius: 8, alignItems: "center" },
+    buttonText: { color: colors.charcoal, fontSize: 16, fontWeight: "600" },
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0, 0, 0, 0.7)", justifyContent: "center", alignItems: "center", padding: 20 },
+    modalContent: { backgroundColor: colors.darkGrey, borderRadius: 16, padding: 20, width: "100%", maxWidth: 320 },
+    modalTitle: { fontSize: 18, fontWeight: "600", color: colors.textPrimary, marginBottom: 16, textAlign: "center" },
+    optionItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 14, paddingHorizontal: 16, borderRadius: 8, marginBottom: 8, backgroundColor: colors.background },
+    optionItemSelected: { backgroundColor: colors.greenGlow + "26", borderWidth: 1, borderColor: colors.greenGlow },
+    optionText: { fontSize: 16, color: colors.textPrimary },
+    optionTextSelected: { color: colors.greenGlow, fontWeight: "600" },
+  });
+}

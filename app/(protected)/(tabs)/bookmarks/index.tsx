@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { typography } from '@/constants/typography';
 import { spacing } from '@/constants/spacing';
 import { getQuizHistory, QuizHistoryItem } from '@/api/quiz';
 import { HistoryItemSkeleton } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 import AppHeader from '@/components/AppHeader';
-import { cardStyle } from '@/components/Card';
+import { useCardStyle } from '@/components/Card';
 
 // Pressable card wrapper with scale animation
 function AnimatedPressable({ 
@@ -82,20 +83,23 @@ function formatTimeAgo(dateString: string): string {
   }
 }
 
-function getDifficultyColor(difficulty: string): string {
+function getDifficultyColor(difficulty: string, colors: ThemeColors): string {
   switch (difficulty.toLowerCase()) {
     case 'easy':
       return colors.greenGlow;
     case 'medium':
-      return '#FFA726'; // Orange
+      return '#FFA726';
     case 'hard':
-      return '#EF5350'; // Red
+      return '#EF5350';
     default:
       return colors.sage;
   }
 }
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
+  const cardStyle = useCardStyle();
+  const styles = useMemo(() => makeStyles(colors, cardStyle), [colors, cardStyle]);
   const router = useRouter();
   const { 
     data: quizzes, 
@@ -191,13 +195,13 @@ export default function HistoryScreen() {
                   <View 
                     style={[
                       styles.difficultyBadge, 
-                      { backgroundColor: getDifficultyColor(quiz.difficulty) + '20' }
+                      { backgroundColor: getDifficultyColor(quiz.difficulty, colors) + '20' }
                     ]}
                   >
                     <Text 
                       style={[
                         styles.difficultyText, 
-                        { color: getDifficultyColor(quiz.difficulty) }
+                        { color: getDifficultyColor(quiz.difficulty, colors) }
                       ]}
                     >
                       {quiz.difficulty.toUpperCase()}
@@ -228,121 +232,33 @@ export default function HistoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  titleSection: {
-    marginBottom: spacing.xxl,
-  },
-  title: {
-    ...typography.title,
-    color: colors.offWhite,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    ...typography.bodySmall,
-    color: colors.sage,
-    marginTop: spacing.xs,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.section,
-  },
-  centerContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    ...typography.titleSmall,
-    fontSize: 18,
-    color: colors.offWhite,
-    marginTop: spacing.lg,
-  },
-  emptySubtext: {
-    ...typography.bodySmall,
-    color: colors.sage,
-    marginTop: spacing.sm,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.darkGrey,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  historyList: {
-    gap: spacing.lg,
-  },
-  historyCard: {
-    ...cardStyle,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  timeText: {
-    fontSize: 11,
-    color: colors.offWhite,
-    opacity: 0.6,
-    letterSpacing: 0.5,
-  },
-  difficultyBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: spacing.xs,
-    borderRadius: 12,
-  },
-  difficultyText: {
-    ...typography.label,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  topicText: {
-    ...typography.titleSmall,
-    fontSize: 18,
-    color: colors.offWhite,
-    lineHeight: 24,
-    marginBottom: spacing.md,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.charcoal,
-  },
-  questionCountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  questionCountText: {
-    fontSize: 13,
-    color: colors.sage,
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  scoreText: {
-    ...typography.body,
-    fontWeight: '700',
-    color: colors.greenGlow,
-  },
-});
+function makeStyles(
+  colors: ThemeColors,
+  cardStyle: ReturnType<typeof useCardStyle>
+) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    titleSection: { marginBottom: spacing.xxl },
+    title: { ...typography.title, color: colors.textPrimary, marginBottom: spacing.sm },
+    subtitle: { ...typography.bodySmall, color: colors.sage, marginTop: spacing.xs },
+    scrollView: { flex: 1 },
+    scrollContent: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.section },
+    centerContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
+    emptyText: { ...typography.titleSmall, fontSize: 18, color: colors.textPrimary, marginTop: spacing.lg },
+    emptySubtext: { ...typography.bodySmall, color: colors.sage, marginTop: spacing.sm, textAlign: 'center' },
+    retryButton: { marginTop: spacing.lg, backgroundColor: colors.darkGrey, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+    retryButtonText: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    historyList: { gap: spacing.lg },
+    historyCard: { ...cardStyle },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.md },
+    timeText: { fontSize: 11, color: colors.textPrimary, opacity: 0.6, letterSpacing: 0.5 },
+    difficultyBadge: { paddingHorizontal: 10, paddingVertical: spacing.xs, borderRadius: 12 },
+    difficultyText: { ...typography.label, fontWeight: '700', letterSpacing: 0.5 },
+    topicText: { ...typography.titleSmall, fontSize: 18, color: colors.textPrimary, lineHeight: 24, marginBottom: spacing.md },
+    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.background },
+    questionCountContainer: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    questionCountText: { fontSize: 13, color: colors.sage },
+    scoreContainer: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+    scoreText: { ...typography.body, fontWeight: '700', color: colors.greenGlow },
+  });
+}

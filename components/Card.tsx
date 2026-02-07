@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { colors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { spacing } from '@/constants/spacing';
 
 const CARD_PADDING = spacing.lg;
@@ -12,25 +12,35 @@ interface CardProps {
   padding?: number;
 }
 
+/** Theme-aware card style for use in StyleSheet or inline (e.g. pressable cards). */
+export function useCardStyle() {
+  const { colors } = useTheme();
+  return useMemo(
+    () => ({
+      backgroundColor: colors.darkGrey,
+      borderRadius: CARD_RADIUS,
+      padding: CARD_PADDING,
+    }),
+    [colors]
+  );
+}
+
 export default function Card({ children, style, padding = CARD_PADDING }: CardProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          backgroundColor: colors.darkGrey,
+          borderRadius: CARD_RADIUS,
+          padding: CARD_PADDING,
+        },
+      }),
+    [colors]
+  );
   return (
     <View style={[styles.card, padding !== CARD_PADDING && { padding }, style]}>
       {children}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: CARD_RADIUS,
-    padding: CARD_PADDING,
-  },
-});
-
-/** Shared card style for use in StyleSheet (e.g. pressable cards). */
-export const cardStyle = {
-  backgroundColor: colors.darkGrey as const,
-  borderRadius: CARD_RADIUS,
-  padding: CARD_PADDING,
-};

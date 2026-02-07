@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useSocket } from '@/contexts/SocketContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -57,6 +58,8 @@ interface AnswerResult {
 }
 
 export default function GamePlayScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const params = useLocalSearchParams<{ gameId: string; isHost?: string }>();
   const gameId = params.gameId;
@@ -87,7 +90,7 @@ export default function GamePlayScreen() {
   const [guestScore, setGuestScore] = useState(0);
   const [countdown, setCountdown] = useState<number | null>(3);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerProgress = useSharedValue(0);
 
   // Start countdown animation
@@ -410,189 +413,41 @@ export default function GamePlayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.charcoal,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 18,
-    color: colors.sage,
-  },
-  countdownContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  countdownText: {
-    fontSize: 120,
-    fontWeight: '700',
-    color: colors.greenGlow,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  progressContainer: {
-    alignItems: 'center',
-  },
-  roundText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.sage,
-    letterSpacing: 1,
-  },
-  questionText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  timerContainer: {
-    width: TIMER_SIZE,
-    height: TIMER_SIZE,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerText: {
-    position: 'absolute',
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  timerTextWarning: {
-    color: colors.error,
-  },
-  scoresBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    backgroundColor: colors.darkGrey,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  scoreItem: {
-    flex: 1,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  scoreLabel: {
-    fontSize: 12,
-    color: colors.sage,
-    marginBottom: 4,
-  },
-  scoreValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.offWhite,
-  },
-  scoreDivider: {
-    paddingHorizontal: 20,
-  },
-  vs: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.sage,
-  },
-  answeredBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 20,
-    backgroundColor: colors.greenGlow + '30',
-    borderRadius: 10,
-    padding: 4,
-  },
-  questionContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  questionTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: colors.offWhite,
-    lineHeight: 32,
-    textAlign: 'center',
-  },
-  optionsContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  optionSelected: {
-    borderColor: colors.greenGlow,
-    backgroundColor: colors.greenGlow + '20',
-  },
-  optionCorrect: {
-    borderColor: colors.success,
-    backgroundColor: colors.success + '20',
-  },
-  optionIncorrect: {
-    borderColor: colors.error,
-    backgroundColor: colors.error + '20',
-  },
-  optionDisabled: {
-    opacity: 0.5,
-  },
-  optionContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  optionLetter: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.charcoal,
-    textAlign: 'center',
-    lineHeight: 28,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-  optionText: {
-    flex: 1,
-    fontSize: 16,
-    color: colors.offWhite,
-  },
-  statusBar: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 14,
-    color: colors.sage,
-  },
-  resultBar: {
-    padding: 16,
-    alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-  },
-  resultText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.offWhite,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingText: { fontSize: 18, color: colors.sage },
+    countdownContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    countdownText: { fontSize: 120, fontWeight: '700', color: colors.greenGlow },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+    progressContainer: { alignItems: 'center' },
+    roundText: { fontSize: 12, fontWeight: '600', color: colors.sage, letterSpacing: 1 },
+    questionText: { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+    timerContainer: { width: TIMER_SIZE, height: TIMER_SIZE, justifyContent: 'center', alignItems: 'center' },
+    timerText: { position: 'absolute', fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+    timerTextWarning: { color: colors.error },
+    scoresBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, paddingHorizontal: 24, backgroundColor: colors.darkGrey, marginHorizontal: 16, borderRadius: 12, marginBottom: 20 },
+    scoreItem: { flex: 1, alignItems: 'center', position: 'relative' },
+    scoreLabel: { fontSize: 12, color: colors.sage, marginBottom: 4 },
+    scoreValue: { fontSize: 28, fontWeight: '700', color: colors.textPrimary },
+    scoreDivider: { paddingHorizontal: 20 },
+    vs: { fontSize: 14, fontWeight: '600', color: colors.sage },
+    answeredBadge: { position: 'absolute', top: 0, right: 20, backgroundColor: colors.greenGlow + '30', borderRadius: 10, padding: 4 },
+    questionContainer: { paddingHorizontal: 20, marginBottom: 24 },
+    questionTitle: { fontSize: 22, fontWeight: '600', color: colors.textPrimary, lineHeight: 32, textAlign: 'center' },
+    optionsContainer: { flex: 1, paddingHorizontal: 16, gap: 12 },
+    optionButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.darkGrey, borderRadius: 12, padding: 16, borderWidth: 2, borderColor: 'transparent' },
+    optionSelected: { borderColor: colors.greenGlow, backgroundColor: colors.greenGlow + '20' },
+    optionCorrect: { borderColor: colors.success, backgroundColor: colors.success + '20' },
+    optionIncorrect: { borderColor: colors.error, backgroundColor: colors.error + '20' },
+    optionDisabled: { opacity: 0.5 },
+    optionContent: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    optionLetter: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.background, textAlign: 'center', lineHeight: 28, fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    optionText: { flex: 1, fontSize: 16, color: colors.textPrimary },
+    statusBar: { padding: 16, alignItems: 'center' },
+    statusText: { fontSize: 14, color: colors.sage },
+    resultBar: { padding: 16, alignItems: 'center', backgroundColor: colors.darkGrey, marginHorizontal: 16, marginBottom: 16, borderRadius: 12 },
+    resultText: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  });
+}
