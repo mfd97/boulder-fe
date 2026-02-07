@@ -1,5 +1,5 @@
-import { Stack } from "expo-router";
-import { useEffect, useState, useCallback } from "react";
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import Animated, {
   useSharedValue,
@@ -13,7 +13,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LaunchScreen from "@/components/LaunchScreen";
 import { colors } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
-import { SocketProvider } from "@/contexts/SocketContext";
+import { SocketProvider, useSocket } from "@/contexts/SocketContext";
+import { onUnauthorized } from "@/lib/authEvents";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -24,29 +25,30 @@ function RootLayoutNav() {
   const [isLaunching, setIsLaunching] = useState(true);
   const appOpacity = useSharedValue(0);
   const [isAuth, setIsAuth] = useState(false);
-
-  // const logout = useCallback(async () => {
-  //   await SecureStore.deleteItemAsync("token");
-  //   setUser(null);
-  // }, []);
+  const router = useRouter();
+  const { disconnect } = useSocket();
 
   const checkToken = async () => {
-    const token = await SecureStore.getItemAsync("token")
-    if(token){
-      setIsAuth(true)
-    }
-  }
-
+    const token = await SecureStore.getItemAsync("token");
+    if (token) setIsAuth(true);
+  };
 
   useEffect(() => {
-    checkToken()
+    checkToken();
     const timer = setTimeout(() => {
       SplashScreen.hideAsync();
     }, 100);
     return () => clearTimeout(timer);
-
-
   }, []);
+
+  useEffect(() => {
+    const unsub = onUnauthorized(() => {
+      disconnect();
+      setIsAuth(false);
+      router.replace("/login");
+    });
+    return unsub;
+  }, [disconnect, router]);
 
   const handleAnimationComplete = () => {
     appOpacity.value = withTiming(1, {

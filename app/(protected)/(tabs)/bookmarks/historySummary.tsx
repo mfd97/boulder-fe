@@ -173,7 +173,7 @@ export default function HistorySummaryScreen() {
                   <Ionicons
                     name={isCorrect ? "checkmark" : "close"}
                     size={16}
-                    color={isCorrect ? colors.greenGlow : "#FF6B6B"}
+                    color={isCorrect ? colors.success : colors.error}
                   />
                 </View>
 

@@ -19,8 +19,12 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   Easing,
+  FadeIn,
 } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import { colors } from "@/constants/colors";
+import { typography } from "@/constants/typography";
+import { spacing } from "@/constants/spacing";
 import AnimatedMeshGradient from "@/components/AnimatedMeshGradient";
 import { router } from "expo-router";
 import { getStreak, getMastery } from "@/api/quiz";
@@ -29,6 +33,8 @@ import { getGameInvitationCount } from "@/api/game";
 import { StreakSkeleton, MasterySkeleton } from "@/components/Skeleton";
 import EmptyState from "@/components/EmptyState";
 import Leaderboard from "@/components/Leaderboard";
+import AppHeader from "@/components/AppHeader";
+import Card from "@/components/Card";
 
 // Progress ring dimensions
 const RING_SIZE = 100;
@@ -45,11 +51,15 @@ function AnimatedPressable({
   onPress, 
   style,
   disabled = false,
+  ...rest
 }: { 
   children: React.ReactNode; 
   onPress?: () => void; 
   style?: any;
   disabled?: boolean;
+  accessibilityLabel?: string;
+  accessibilityRole?: "button" | "link" | "none";
+  accessibilityHint?: string;
 }) {
   const scale = useSharedValue(1);
 
@@ -63,6 +73,7 @@ function AnimatedPressable({
       onPressIn={() => { scale.value = withSpring(0.97, { damping: 15 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
       disabled={disabled}
+      {...rest}
     >
       <Animated.View style={[style, animatedStyle]}>
         {children}
@@ -73,7 +84,7 @@ function AnimatedPressable({
 
 export default function HomeScreen() {
   // Fetch streak data
-  const { data: streakData, isLoading, error } = useQuery({
+  const { data: streakData, isLoading } = useQuery({
     queryKey: ['streak'],
     queryFn: getStreak,
     refetchOnMount: 'always', // Always refresh when component mounts
@@ -81,7 +92,7 @@ export default function HomeScreen() {
   });
 
   // Fetch mastery data
-  const { data: masteryData, isLoading: isMasteryLoading, error: masteryError } = useQuery({
+  const { data: masteryData, isLoading: isMasteryLoading } = useQuery({
     queryKey: ['mastery'],
     queryFn: getMastery,
     refetchOnMount: 'always',
@@ -109,12 +120,6 @@ export default function HomeScreen() {
     queryFn: getGameInvitationCount,
     refetchInterval: 10000, // Refresh every 10 seconds
   });
-
-  // Debug logging
-  console.log('[HomeScreen] Streak data:', streakData);
-  console.log('[HomeScreen] Streak error:', error);
-  console.log('[HomeScreen] Mastery data:', masteryData);
-  console.log('[HomeScreen] Mastery error:', masteryError);
 
   const streak = streakData?.streak ?? 0;
   const hasCompletedToday = streakData?.hasCompletedToday ?? false;
@@ -163,15 +168,7 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="light-content" />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoIcon}>
-              <Text style={styles.logoText}>B</Text>
-            </View>
-            <Text style={styles.brandText}>BOULDER</Text>
-          </View>
-        </View>
+        <AppHeader />
 
         <ScrollView
           style={styles.scrollView}
@@ -184,7 +181,7 @@ export default function HomeScreen() {
             {isLoading ? (
               <StreakSkeleton />
             ) : (
-              <View style={styles.streakRow}>
+              <Animated.View entering={FadeIn.duration(400)} style={styles.streakRow}>
                 <View style={styles.streakLeft}>
                   <Text style={styles.streakNumber}>{streak}</Text>
                   <Text style={styles.streakSubtext}>
@@ -237,7 +234,7 @@ export default function HomeScreen() {
                     )}
                   </View>
                 </View>
-              </View>
+              </Animated.View>
             )}
           </View>
 
@@ -245,7 +242,7 @@ export default function HomeScreen() {
           {isMasteryLoading ? (
             <MasterySkeleton />
           ) : masteryData?.topic ? (
-            <View style={styles.masterySection}>
+            <Animated.View entering={FadeIn.duration(400)} style={styles.masterySection}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Mastery Tracker</Text>
                 <Ionicons
@@ -255,7 +252,7 @@ export default function HomeScreen() {
                 />
               </View>
 
-              <View style={styles.masteryCard}>
+              <Card>
                 <Text style={styles.cardLabel}>CURRENT PEAK</Text>
                 <View style={styles.masteryHeader}>
                   <Text style={styles.masterySubject}>{masteryTopic}</Text>
@@ -278,10 +275,10 @@ export default function HomeScreen() {
                     </View>
                   </View>
                 </View>
-              </View>
-            </View>
+              </Card>
+            </Animated.View>
           ) : (
-            <View style={styles.masterySection}>
+            <Animated.View entering={FadeIn.duration(400)} style={styles.masterySection}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Mastery Tracker</Text>
                 <Ionicons
@@ -290,7 +287,7 @@ export default function HomeScreen() {
                   color={colors.offWhite}
                 />
               </View>
-              <View style={styles.masteryEmptyCard}>
+              <Card style={styles.masteryEmptyCard}>
                 <EmptyState
                   illustration="trophy"
                   title="Build Your Mastery"
@@ -298,8 +295,8 @@ export default function HomeScreen() {
                   actionLabel="Start Learning"
                   onAction={() => router.push('/(protected)/(tabs)/quiz')}
                 />
-              </View>
-            </View>
+              </Card>
+            </Animated.View>
           )}
 
           {/* Leaderboard Section */}
@@ -311,7 +308,13 @@ export default function HomeScreen() {
               </View>
               <TouchableOpacity 
                 style={styles.friendsButton}
-                onPress={() => router.push('/(protected)/(tabs)/home/friends')}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/(protected)/(tabs)/home/friends');
+                }}
+                accessibilityLabel="Friends"
+                accessibilityRole="button"
+                accessibilityHint="Open friends and leaderboard"
               >
                 <Ionicons name="people" size={20} color={colors.charcoal} />
                 {pendingCount > 0 && (
@@ -333,7 +336,13 @@ export default function HomeScreen() {
             {/* Multiplayer Button */}
             <AnimatedPressable 
               style={styles.multiplayerButton} 
-              onPress={() => router.push('/(protected)/(tabs)/home/game')}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/(protected)/(tabs)/home/game');
+              }}
+              accessibilityLabel="Multiplayer"
+              accessibilityRole="button"
+              accessibilityHint="Opens multiplayer game hub"
             >
               <View style={styles.multiplayerContent}>
                 <Ionicons name="game-controller" size={22} color={colors.greenGlow} />
@@ -349,7 +358,13 @@ export default function HomeScreen() {
             {/* Start Quiz Button */}
             <AnimatedPressable 
               style={styles.startQuizButton} 
-              onPress={() => router.push(`/quiz/CreateQuiz`)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/quiz/CreateQuiz`);
+              }}
+              accessibilityLabel="Start quiz"
+              accessibilityRole="button"
+              accessibilityHint="Create and start a new quiz"
             >
               <Text style={styles.startQuizText}>START QUIZ</Text>
               <Ionicons
@@ -373,53 +388,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  logoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  logoIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: colors.greenGlow,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.charcoal,
-  },
-  brandText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.offWhite,
-    letterSpacing: 1,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   streakSection: {
-    marginTop: 8,
-    marginBottom: 32,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xxxl,
   },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    ...typography.caption,
     color: colors.offWhite,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     letterSpacing: 1,
   },
   streakRow: {
@@ -431,13 +414,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   streakNumber: {
-    fontSize: 48,
-    fontWeight: "bold",
+    ...typography.display,
     color: colors.offWhite,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   streakSubtext: {
-    fontSize: 14,
+    ...typography.bodySmall,
     color: colors.offWhite,
     opacity: 0.8,
   },
@@ -454,85 +436,73 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   progressScore: {
+    ...typography.titleSmall,
     fontSize: 22,
-    fontWeight: "bold",
     color: colors.greenGlow,
   },
   progressLabel: {
+    ...typography.label,
     fontSize: 9,
     color: colors.greenGlow,
-    fontWeight: "600",
-    letterSpacing: 0.5,
     marginTop: 2,
   },
   masterySection: {
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: "600",
     color: colors.offWhite,
   },
-  masteryCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 20,
-  },
   masteryEmptyCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
   cardLabel: {
-    fontSize: 10,
-    fontWeight: "600",
+    ...typography.label,
     color: colors.offWhite,
     opacity: 0.7,
     letterSpacing: 1,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   masteryHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
   masterySubject: {
-    fontSize: 20,
-    fontWeight: "600",
+    ...typography.titleSmall,
     color: colors.offWhite,
     flex: 1,
   },
   starsContainer: {
     flexDirection: "row",
-    gap: 4,
+    gap: spacing.xs,
   },
   masteryStats: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: spacing.lg,
   },
   masteryPercentage: {
-    fontSize: 32,
-    fontWeight: "bold",
+    ...typography.title,
     color: colors.greenGlow,
   },
   masteryInfo: {
     flex: 1,
   },
   masteryLevel: {
-    fontSize: 10,
-    fontWeight: "600",
+    ...typography.label,
     color: colors.offWhite,
     opacity: 0.7,
     letterSpacing: 1,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   waveGraph: {
     flexDirection: "row",
@@ -546,7 +516,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   leaderboardSection: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   leaderboardHeader: {
     flexDirection: "row",
@@ -554,12 +524,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   leaderboardLabel: {
-    fontSize: 12,
-    fontWeight: "600",
+    ...typography.caption,
     color: colors.offWhite,
     opacity: 0.7,
     letterSpacing: 1,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   friendsButton: {
     backgroundColor: colors.greenGlow,
@@ -574,7 +543,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -4,
-    backgroundColor: "#FF6B6B",
+    backgroundColor: colors.error,
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -588,14 +557,14 @@ const styles = StyleSheet.create({
     color: colors.offWhite,
   },
   actionButtons: {
-    gap: 12,
-    marginBottom: 20,
+    gap: spacing.md,
+    marginBottom: spacing.xl,
   },
   multiplayerButton: {
     backgroundColor: colors.darkGrey,
     borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xxl,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
@@ -606,9 +575,10 @@ const styles = StyleSheet.create({
   multiplayerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   multiplayerText: {
+    ...typography.body,
     fontSize: 15,
     fontWeight: "700",
     color: colors.greenGlow,
@@ -618,7 +588,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -6,
     right: -6,
-    backgroundColor: "#FF6B6B",
+    backgroundColor: colors.error,
     minWidth: 22,
     height: 22,
     borderRadius: 11,
@@ -627,23 +597,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   gameInviteBadgeText: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: "700",
     color: colors.offWhite,
   },
   startQuizButton: {
     backgroundColor: colors.sage,
     borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xxl,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   startQuizText: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: "bold",
     color: colors.charcoal,
     letterSpacing: 0.5,
   },

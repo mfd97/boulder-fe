@@ -21,6 +21,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
+import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { useSocket } from '@/contexts/SocketContext';
 
@@ -210,7 +211,7 @@ export default function GamePlayScreen() {
 
   const handleSelectAnswer = (answer: string) => {
     if (selectedAnswer || showingResult) return;
-    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedAnswer(answer);
     submitAnswer(gameId, answer);
   };
@@ -316,7 +317,7 @@ export default function GamePlayScreen() {
               cx={TIMER_SIZE / 2}
               cy={TIMER_SIZE / 2}
               r={TIMER_RADIUS}
-              stroke={timeLeft <= 5 ? '#FF6B6B' : colors.greenGlow}
+              stroke={timeLeft <= 5 ? colors.error : colors.greenGlow}
               strokeWidth={TIMER_STROKE}
               fill="transparent"
               strokeDasharray={TIMER_CIRCUMFERENCE}
@@ -376,10 +377,10 @@ export default function GamePlayScreen() {
               <Text style={styles.optionText}>{option}</Text>
             </View>
             {showingResult && answerResult?.correctAnswer === option && (
-              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+              <Ionicons name="checkmark-circle" size={24} color={colors.success} />
             )}
             {showingResult && selectedAnswer === option && answerResult?.correctAnswer !== option && (
-              <Ionicons name="close-circle" size={24} color="#FF6B6B" />
+              <Ionicons name="close-circle" size={24} color={colors.error} />
             )}
           </TouchableOpacity>
         ))}
@@ -467,7 +468,7 @@ const styles = StyleSheet.create({
     color: colors.offWhite,
   },
   timerTextWarning: {
-    color: '#FF6B6B',
+    color: colors.error,
   },
   scoresBar: {
     flexDirection: 'row',
@@ -541,12 +542,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.greenGlow + '20',
   },
   optionCorrect: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#4CAF5020',
+    borderColor: colors.success,
+    backgroundColor: colors.success + '20',
   },
   optionIncorrect: {
-    borderColor: '#FF6B6B',
-    backgroundColor: '#FF6B6B20',
+    borderColor: colors.error,
+    backgroundColor: colors.error + '20',
   },
   optionDisabled: {
     opacity: 0.5,

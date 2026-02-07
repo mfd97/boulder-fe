@@ -1,6 +1,11 @@
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+
+function triggerTabHaptic() {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+}
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -20,6 +25,8 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.offWhite,
         tabBarStyle: {
           backgroundColor: colors.charcoal,
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(240, 237, 232, 0.12)',
         },
       }}
     >
@@ -27,27 +34,29 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'HOME',
+          tabBarAccessibilityLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
         }}
+        listeners={{ tabPress: triggerTabHaptic }}
       />
       <Tabs.Screen
         name="quiz"
         options={{
           title: 'QUIZ',
+          tabBarAccessibilityLabel: 'Quiz',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="help-circle" size={size} color={color} />
           ),
         }}
         listeners={{
           tabPress: (e) => {
-            // Only navigate if we're on a nested screen
+            triggerTabHaptic();
             if (isOnNestedQuizScreen) {
               e.preventDefault();
               router.replace('/(protected)/(tabs)/quiz');
             }
-            // If already on main quiz screen, let default behavior happen (do nothing)
           },
         }}
       />
@@ -55,18 +64,18 @@ export default function TabsLayout() {
         name="bookmarks"
         options={{
           title: 'HISTORY',
+          tabBarAccessibilityLabel: 'History',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="time" size={size} color={color} />
           ),
         }}
         listeners={{
           tabPress: (e) => {
-            // Only navigate if we're on a nested screen
+            triggerTabHaptic();
             if (isOnNestedBookmarksScreen) {
               e.preventDefault();
               router.replace('/(protected)/(tabs)/bookmarks');
             }
-            // If already on main history screen, let default behavior happen (do nothing)
           },
         }}
       />
@@ -74,10 +83,12 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'PROFILE',
+          tabBarAccessibilityLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
         }}
+        listeners={{ tabPress: triggerTabHaptic }}
       />
     </Tabs>
   );

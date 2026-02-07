@@ -16,10 +16,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { getQuizHistory, createQuiz, QuizHistoryItem } from '@/api/quiz';
 import QuizLoadingOverlay from '@/components/QuizLoadingOverlay';
 import EmptyState from '@/components/EmptyState';
+import AppHeader from '@/components/AppHeader';
+import { cardStyle } from '@/components/Card';
 
 // Pressable card wrapper with scale animation
 function AnimatedPressable({ 
@@ -27,11 +32,14 @@ function AnimatedPressable({
   onPress, 
   style,
   disabled = false,
+  ...rest
 }: { 
   children: React.ReactNode; 
   onPress?: () => void; 
   style?: any;
   disabled?: boolean;
+  accessibilityLabel?: string;
+  accessibilityRole?: "button" | "link" | "none";
 }) {
   const scale = useSharedValue(1);
 
@@ -45,6 +53,7 @@ function AnimatedPressable({
       onPressIn={() => { scale.value = withSpring(0.96, { damping: 15 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
       disabled={disabled}
+      {...rest}
     >
       <Animated.View style={[style, animatedStyle]}>
         {children}
@@ -111,6 +120,7 @@ export default function QuizHubScreen() {
   }, [quizHistory]);
 
   const handleCreateQuiz = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/(protected)/(tabs)/quiz/CreateQuiz");
   };
 
@@ -120,6 +130,7 @@ export default function QuizHubScreen() {
 
   const handleTopicPress = (topic: string, difficulty: string) => {
     if (isGenerating) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setGeneratingTopic(topic);
     startQuiz({ topic, difficulty });
   };
@@ -131,15 +142,7 @@ export default function QuizHubScreen() {
       {/* Quiz Loading Overlay */}
       <QuizLoadingOverlay topic={generatingTopic} visible={isGenerating} />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoText}>B</Text>
-          </View>
-          <Text style={styles.brandText}>BOULDER</Text>
-        </View>
-      </View>
+      <AppHeader />
 
       <ScrollView 
         style={styles.scrollView}
@@ -154,10 +157,13 @@ export default function QuizHubScreen() {
 
         {/* Create New Quiz Button */}
         <TouchableOpacity 
-          style={styles.createButton}
+          style={[styles.createButton, isGenerating && styles.createButtonDisabled]}
           onPress={handleCreateQuiz}
           activeOpacity={0.7}
           disabled={isGenerating}
+          accessibilityLabel="Create new quiz"
+          accessibilityRole="button"
+          accessibilityHint="Generate a new quiz with AI"
         >
           <View style={styles.createButtonContent}>
             <View style={styles.createButtonTextContainer}>
@@ -172,7 +178,11 @@ export default function QuizHubScreen() {
         <View style={styles.recentSection}>
           <View style={styles.recentHeader}>
             <Text style={styles.recentTitle}>RECENT TOPICS</Text>
-            <TouchableOpacity onPress={handleViewHistory}>
+            <TouchableOpacity 
+              onPress={handleViewHistory}
+              accessibilityLabel="View history"
+              accessibilityRole="button"
+            >
               <Text style={styles.viewHistoryLink}>View History</Text>
             </TouchableOpacity>
           </View>
@@ -205,6 +215,8 @@ export default function QuizHubScreen() {
                   style={styles.topicCard}
                   onPress={() => handleTopicPress(quiz.topic, quiz.difficulty)}
                   disabled={isGenerating}
+                  accessibilityLabel={`Retake quiz: ${quiz.topic}, ${quiz.difficulty}`}
+                  accessibilityRole="button"
                 >
                   <View style={styles.topicIconContainer}>
                     <Ionicons 
@@ -243,60 +255,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.charcoal,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: colors.greenGlow,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.charcoal,
-  },
-  brandText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.offWhite,
-    letterSpacing: 1,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.section,
   },
   titleSection: {
-    marginBottom: 32,
+    marginBottom: spacing.xxl,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.title,
     color: colors.offWhite,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 14,
-    color: colors.offWhite,
-    opacity: 0.7,
+    ...typography.bodySmall,
+    color: colors.sage,
+    marginTop: spacing.xs,
   },
   createButton: {
     backgroundColor: '#3A3D40',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 32,
+    padding: spacing.xl,
+    marginBottom: spacing.xxxl,
   },
   createButtonContent: {
     flexDirection: 'row',
@@ -307,43 +291,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   createButtonTitle: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: '600',
     color: colors.offWhite,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   createButtonSubtitle: {
-    fontSize: 12,
+    ...typography.caption,
     color: colors.offWhite,
     opacity: 0.7,
   },
+  createButtonDisabled: {
+    opacity: 0.6,
+  },
   recentSection: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   recentHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   recentTitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.caption,
     color: colors.offWhite,
     letterSpacing: 1,
   },
   viewHistoryLink: {
-    fontSize: 12,
+    ...typography.caption,
     color: colors.greenGlow,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 40,
-    gap: 8,
+    paddingVertical: spacing.section,
+    gap: spacing.sm,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '500',
+    ...typography.body,
     color: colors.offWhite,
   },
   emptySubtext: {
@@ -358,9 +343,7 @@ const styles = StyleSheet.create({
   topicCard: {
     width: CARD_SIZE,
     height: CARD_SIZE,
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 16,
+    ...cardStyle,
     justifyContent: 'space-between',
   },
   topicIconContainer: {
@@ -372,37 +355,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   topicTitle: {
+    ...typography.body,
     fontSize: 15,
-    fontWeight: '600',
     color: colors.offWhite,
     lineHeight: 20,
   },
   topicMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   topicScore: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: '700',
     color: colors.greenGlow,
   },
   topicDifficulty: {
     backgroundColor: colors.charcoal,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 3,
     borderRadius: 6,
   },
   topicDifficultyText: {
+    ...typography.label,
     fontSize: 9,
-    fontWeight: '600',
     color: colors.sage,
     letterSpacing: 0.5,
   },
   retakeHint: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   retakeText: {
     fontSize: 11,

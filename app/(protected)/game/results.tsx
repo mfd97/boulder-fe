@@ -134,7 +134,7 @@ export default function GameResultsScreen() {
       icon: 'sad' as const,
       title: 'Defeat',
       subtitle: 'Better luck next time',
-      color: '#FF6B6B',
+      color: colors.error,
     };
   };
 

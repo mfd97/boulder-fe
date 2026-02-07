@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
+import { emitUnauthorized } from "@/lib/authEvents";
 
 // Dynamic base URL detection for development
 const getDevBaseUrl = (): string => {
@@ -33,9 +34,10 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
-      // Optionally clear token / redirect to login
+      await SecureStore.deleteItemAsync("token");
+      emitUnauthorized();
     }
     return Promise.reject(error);
   }

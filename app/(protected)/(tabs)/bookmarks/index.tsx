@@ -15,19 +15,27 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 import { getQuizHistory, QuizHistoryItem } from '@/api/quiz';
 import { HistoryItemSkeleton } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
+import AppHeader from '@/components/AppHeader';
+import { cardStyle } from '@/components/Card';
 
 // Pressable card wrapper with scale animation
 function AnimatedPressable({ 
   children, 
   onPress, 
   style,
+  ...rest
 }: { 
   children: React.ReactNode; 
   onPress?: () => void; 
   style?: any;
+  accessibilityLabel?: string;
+  accessibilityRole?: "button" | "link" | "none";
+  accessibilityHint?: string;
 }) {
   const scale = useSharedValue(1);
 
@@ -40,6 +48,7 @@ function AnimatedPressable({
       onPress={onPress}
       onPressIn={() => { scale.value = withSpring(0.98, { damping: 15 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+      {...rest}
     >
       <Animated.View style={[style, animatedStyle]}>
         {children}
@@ -66,7 +75,7 @@ function formatTimeAgo(dateString: string): string {
     return `${diffInDays} DAY${diffInDays > 1 ? 'S' : ''} AGO`;
   } else {
     return date.toLocaleDateString('en-US', {
-      month: 'SHORT',
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
     }).toUpperCase();
@@ -110,15 +119,7 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoText}>B</Text>
-          </View>
-          <Text style={styles.brandText}>BOULDER</Text>
-        </View>
-      </View>
+      <AppHeader />
 
       <ScrollView 
         style={styles.scrollView}
@@ -179,6 +180,9 @@ export default function HistoryScreen() {
                 key={quiz._id} 
                 style={styles.historyCard}
                 onPress={() => handleQuizPress(quiz._id)}
+                accessibilityLabel={`Quiz: ${quiz.topic}, ${quiz.percentage}%`}
+                accessibilityRole="button"
+                accessibilityHint="View quiz summary"
               >
                 <View style={styles.cardHeader}>
                   <Text style={styles.timeText}>
@@ -229,54 +233,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.charcoal,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: colors.greenGlow,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.charcoal,
-  },
-  brandText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.offWhite,
-    letterSpacing: 1,
-  },
   titleSection: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    ...typography.title,
     color: colors.offWhite,
+    marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 14,
+    ...typography.bodySmall,
     color: colors.sage,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.section,
   },
   centerContainer: {
     alignItems: 'center',
@@ -284,19 +260,19 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyText: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: '600',
     color: colors.offWhite,
-    marginTop: 16,
+    marginTop: spacing.lg,
   },
   emptySubtext: {
-    fontSize: 14,
+    ...typography.bodySmall,
     color: colors.sage,
-    marginTop: 8,
+    marginTop: spacing.sm,
     textAlign: 'center',
   },
   retryButton: {
-    marginTop: 16,
+    marginTop: spacing.lg,
     backgroundColor: colors.darkGrey,
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -308,18 +284,16 @@ const styles = StyleSheet.create({
     color: colors.offWhite,
   },
   historyList: {
-    gap: 16,
+    gap: spacing.lg,
   },
   historyCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 12,
-    padding: 16,
+    ...cardStyle,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   timeText: {
     fontSize: 11,
@@ -329,26 +303,26 @@ const styles = StyleSheet.create({
   },
   difficultyBadge: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
     borderRadius: 12,
   },
   difficultyText: {
-    fontSize: 10,
+    ...typography.label,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   topicText: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: '600',
     color: colors.offWhite,
     lineHeight: 24,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 12,
+    paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.charcoal,
   },
@@ -364,10 +338,10 @@ const styles = StyleSheet.create({
   scoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   scoreText: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '700',
     color: colors.greenGlow,
   },

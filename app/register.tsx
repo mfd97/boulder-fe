@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosError } from 'axios';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import * as Haptics from 'expo-haptics';
 import React, { useContext, useState, useCallback, useMemo } from 'react';
 import {
   KeyboardAvoidingView,
@@ -15,9 +16,48 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  ScrollView,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import Input from './components/Input';
+
+function AnimatedButton({
+  children,
+  onPress,
+  style,
+  disabled,
+  accessibilityLabel: a11yLabel,
+  accessibilityHint: a11yHint,
+}: {
+  children: React.ReactNode;
+  onPress: () => void;
+  style?: any;
+  disabled?: boolean;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+}) {
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Pressable
+      onPress={() => {
+        if (disabled) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress();
+      }}
+      onPressIn={() => { scale.value = withSpring(0.97, { damping: 15 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
+      accessibilityHint={a11yHint}
+    >
+      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
+    </Pressable>
+  );
+}
 
 // Validation constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,7 +73,7 @@ const calculatePasswordStrength = (password: string): { score: number; label: st
   if (/\d/.test(password)) score += 1;
   if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
   
-  if (score <= 1) return { score, label: 'Weak', color: '#FF6B6B' };
+  if (score <= 1) return { score, label: 'Weak', color: colors.error };
   if (score <= 2) return { score, label: 'Fair', color: '#FFB347' };
   if (score <= 3) return { score, label: 'Good', color: '#FFD93D' };
   if (score <= 4) return { score, label: 'Strong', color: colors.greenGlow };
@@ -163,116 +203,130 @@ export default function RegisterScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={styles.content}>
-          {/* Title */}
-          <Text style={styles.title}>Begin Your Ascent</Text>
-
-          {/* Form */}
-          <View style={styles.form}>
-            {/* Registration Error Banner */}
-            {registerError && (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorBannerText}>{registerError}</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            {/* Logo - B brand */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoIcon}>
+                <Text style={styles.logoText}>B</Text>
               </View>
-            )}
+              <Text style={styles.brandText}>BOULDER</Text>
+            </View>
 
-            {/* Full Name Input */}
-            <Input
-              label="Full Name"
-              value={fullName}
-              onChangeText={handleFullNameChange}
-              autoCapitalize="words"
-              autoComplete="name"
-              editable={!registerMutation.isPending}
-              error={fullNameError}
-              isValid={isFullNameValid}
-              showValidation={fullNameTouched && fullName.length > 0}
-            />
+            <Text style={styles.title}>Begin Your Ascent</Text>
 
-            {/* Email Input */}
-            <Input
-              label="Email"
-              value={email}
-              onChangeText={handleEmailChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              editable={!registerMutation.isPending}
-              error={emailError}
-              isValid={isEmailValid}
-              showValidation={emailTouched && email.length > 0}
-            />
-
-            {/* Password Input */}
-            <View>
-              <Input
-                label="Password"
-                value={password}
-                onChangeText={handlePasswordChange}
-                secureTextEntry
-                autoComplete="password-new"
-                editable={!registerMutation.isPending}
-                error={passwordError}
-                isValid={isPasswordValid}
-                showValidation={passwordTouched && password.length > 0}
-              />
-              
-              {/* Password Strength Meter */}
-              {password.length > 0 && (
-                <View style={styles.strengthContainer}>
-                  <View style={styles.strengthBarContainer}>
-                    {[1, 2, 3, 4, 5].map((level) => (
-                      <View
-                        key={level}
-                        style={[
-                          styles.strengthBar,
-                          {
-                            backgroundColor: level <= passwordStrength.score 
-                              ? passwordStrength.color 
-                              : colors.darkGrey,
-                          },
-                        ]}
-                      />
-                    ))}
-                  </View>
-                  <Text style={[styles.strengthLabel, { color: passwordStrength.color }]}>
-                    {passwordStrength.label}
-                  </Text>
+            <View style={styles.form}>
+              {registerError && (
+                <View style={styles.errorBanner} accessibilityRole="alert">
+                  <Text style={styles.errorBannerText}>{registerError}</Text>
                 </View>
               )}
-            </View>
 
-            {/* Create Account Button */}
-            <TouchableOpacity 
-              style={[
-                styles.createButton,
-                registerMutation.isPending && styles.createButtonDisabled
-              ]}
-              onPress={handleRegister}
-              disabled={registerMutation.isPending}
-            >
-              {registerMutation.isPending ? (
-                <ActivityIndicator color={colors.charcoal} size="small" />
-              ) : (
-                <Text style={styles.createButtonText}>CREATE ACCOUNT</Text>
-              )}
-            </TouchableOpacity>
+              <Input
+                label="Full Name"
+                value={fullName}
+                onChangeText={handleFullNameChange}
+                autoCapitalize="words"
+                autoComplete="name"
+                editable={!registerMutation.isPending}
+                error={fullNameError}
+                isValid={isFullNameValid}
+                showValidation={fullNameTouched && fullName.length > 0}
+              />
 
-            {/* Terms of Service */}
-            <Text style={styles.termsText}>
-              By signing up, you agree to our terms of service.
-            </Text>
+              <Input
+                label="Email"
+                value={email}
+                onChangeText={handleEmailChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                editable={!registerMutation.isPending}
+                error={emailError}
+                isValid={isEmailValid}
+                showValidation={emailTouched && email.length > 0}
+              />
 
-            {/* Login Link */}
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>Already a member? </Text>
-              <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={styles.loginLink}>Login</Text>
-              </TouchableOpacity>
+              <View style={styles.passwordSection}>
+                <Text style={styles.passwordHint}>
+                  Use 8+ characters, mix of letters and numbers for a stronger password.
+                </Text>
+                <Input
+                  label="Password"
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry
+                  autoComplete="password-new"
+                  editable={!registerMutation.isPending}
+                  error={passwordError}
+                  isValid={isPasswordValid}
+                  showValidation={passwordTouched && password.length > 0}
+                />
+                {password.length > 0 && (
+                  <View style={styles.strengthContainer}>
+                    <View style={styles.strengthBarContainer}>
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <View
+                          key={level}
+                          style={[
+                            styles.strengthBar,
+                            {
+                              backgroundColor: level <= passwordStrength.score
+                                ? passwordStrength.color
+                                : colors.darkGrey,
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
+                    <Text style={[styles.strengthLabel, { color: passwordStrength.color }]}>
+                      {passwordStrength.label}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <AnimatedButton
+                onPress={handleRegister}
+                disabled={registerMutation.isPending}
+                style={[
+                  styles.createButton,
+                  registerMutation.isPending && styles.createButtonDisabled,
+                ]}
+                accessibilityLabel="Create account"
+                accessibilityHint="Submits the form to register a new account"
+              >
+                {registerMutation.isPending ? (
+                  <ActivityIndicator color={colors.charcoal} size="small" />
+                ) : (
+                  <Text style={styles.createButtonText}>CREATE ACCOUNT</Text>
+                )}
+              </AnimatedButton>
+
+              <Text style={styles.termsText}>
+                By signing up, you agree to our terms of service.
+              </Text>
+
+              <View style={styles.loginContainer}>
+                <Text style={styles.loginText}>Already a member? </Text>
+                <TouchableOpacity
+                  onPress={() => router.push('/login')}
+                  accessibilityRole="link"
+                  accessibilityLabel="Log in"
+                  accessibilityHint="Opens the login screen"
+                >
+                  <Text style={styles.loginLink}>Login</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -286,46 +340,84 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 40,
+    paddingBottom: 32,
+  },
+  content: {
+    width: '100%',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 32,
+  },
+  logoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: colors.greenGlow,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.charcoal,
+  },
+  brandText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.offWhite,
+    letterSpacing: 1,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: colors.offWhite,
-    marginBottom: 40,
+    marginBottom: 32,
   },
   form: {
-    flex: 1,
+    width: '100%',
+  },
+  passwordSection: {
+    marginBottom: 4,
+  },
+  passwordHint: {
+    fontSize: 12,
+    color: colors.sage,
+    marginBottom: 8,
+    lineHeight: 18,
   },
   createButton: {
     backgroundColor: colors.sage,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 12,
     minHeight: 52,
     justifyContent: 'center',
   },
   createButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: colors.charcoal,
     letterSpacing: 0.5,
   },
   errorBanner: {
     backgroundColor: 'rgba(255, 107, 107, 0.15)',
     borderWidth: 1,
-    borderColor: '#FF6B6B',
+    borderColor: colors.error,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
   errorBannerText: {
-    color: '#FF6B6B',
+    color: colors.error,
     fontSize: 14,
     textAlign: 'center',
     fontWeight: '500',
@@ -333,8 +425,8 @@ const styles = StyleSheet.create({
   strengthContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: -16,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 20,
     paddingHorizontal: 4,
   },
   strengthBarContainer: {
@@ -355,10 +447,10 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   termsText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.offWhite,
     textAlign: 'center',
-    opacity: 0.8,
+    opacity: 0.6,
     marginBottom: 24,
   },
   loginContainer: {
@@ -369,10 +461,11 @@ const styles = StyleSheet.create({
   loginText: {
     fontSize: 14,
     color: colors.offWhite,
+    opacity: 0.8,
   },
   loginLink: {
-    fontSize: 14,
-    color: colors.offWhite,
+    fontSize: 15,
+    color: colors.greenGlow,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

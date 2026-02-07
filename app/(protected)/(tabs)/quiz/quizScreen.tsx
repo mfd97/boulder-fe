@@ -10,6 +10,7 @@ import { useState, useMemo } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
 import { colors } from "@/constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { submitQuizResult } from "@/api/quiz";
@@ -78,6 +79,7 @@ export default function QuizScreen() {
       Alert.alert("Incomplete Quiz", "Please answer all questions.");
       return;
     }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // Calculate score
     let totalScore = 0;

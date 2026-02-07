@@ -11,9 +11,6 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants/colors";
 
-const ERROR_COLOR = "#FF6B6B";
-const SUCCESS_COLOR = colors.greenGlow;
-
 interface InputProps extends Omit<TextInputProps, "placeholder"> {
   label: string;
   value: string;
@@ -54,16 +51,16 @@ export default function Input({
 
   // Determine border color based on state
   const getBorderColor = () => {
-    if (hasError) return ERROR_COLOR;
-    if (showSuccess) return SUCCESS_COLOR;
+    if (hasError) return colors.error;
+    if (showSuccess) return colors.success;
     if (isFocused) return colors.greenGlow;
     return "transparent";
   };
 
   // Determine label color based on state
   const getLabelColor = () => {
-    if (hasError) return ERROR_COLOR;
-    if (showSuccess) return SUCCESS_COLOR;
+    if (hasError) return colors.error;
+    if (showSuccess) return colors.success;
     return colors.greenGlow;
   };
 
@@ -125,7 +122,7 @@ export default function Input({
             <Ionicons
               name={hasError ? "close-circle" : "checkmark-circle"}
               size={20}
-              color={hasError ? ERROR_COLOR : SUCCESS_COLOR}
+              color={hasError ? colors.error : colors.success}
             />
           </View>
         )}
@@ -151,7 +148,7 @@ export default function Input({
       {/* Error Message */}
       {hasError && (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={14} color={ERROR_COLOR} />
+          <Ionicons name="alert-circle" size={14} color={colors.error} />
           <Text style={styles.errorText}>{error}</Text>
         </View>
       )}
@@ -209,7 +206,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   errorText: {
-    color: ERROR_COLOR,
+    color: colors.error,
     fontSize: 12,
     marginLeft: 4,
     fontWeight: "500",

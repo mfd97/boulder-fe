@@ -15,20 +15,26 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { colors } from '@/constants/colors';
 import { getPendingInvitations, getGameHistory, GameInvitation, GameHistoryItem } from '@/api/game';
 import { useSocket } from '@/contexts/SocketContext';
 import EmptyState from '@/components/EmptyState';
+import { cardStyle } from '@/components/Card';
 
 // Animated pressable for buttons
 function AnimatedButton({ 
   children, 
   onPress, 
   style,
+  ...rest
 }: { 
   children: React.ReactNode; 
   onPress?: () => void; 
   style?: any;
+  accessibilityLabel?: string;
+  accessibilityRole?: 'button';
+  accessibilityHint?: string;
 }) {
   const scale = useSharedValue(1);
 
@@ -41,6 +47,7 @@ function AnimatedButton({
       onPress={onPress}
       onPressIn={() => { scale.value = withSpring(0.96, { damping: 15 }); }}
       onPressOut={() => { scale.value = withSpring(1, { damping: 15 }); }}
+      {...rest}
     >
       <Animated.View style={[style, animatedStyle]}>
         {children}
@@ -106,11 +113,13 @@ export default function GameHubScreen() {
   }, [onInvitation, offInvitation, onGameStarted, offGameStarted, refetchInvitations, router]);
 
   const handleAcceptInvitation = (gameId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     acceptGame(gameId);
     queryClient.invalidateQueries({ queryKey: ['gameInvitations'] });
   };
 
   const handleDeclineInvitation = (gameId: string, hostName: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
       'Decline Challenge',
       `Are you sure you want to decline ${hostName}'s challenge?`,
@@ -130,8 +139,8 @@ export default function GameHubScreen() {
 
   const getResultColor = (result: string) => {
     switch (result) {
-      case 'won': return '#4CAF50';
-      case 'lost': return '#FF6B6B';
+      case 'won': return colors.success;
+      case 'lost': return colors.error;
       default: return colors.sage;
     }
   };
@@ -165,7 +174,13 @@ export default function GameHubScreen() {
         {/* Challenge Button */}
         <AnimatedButton
           style={styles.challengeButton}
-          onPress={() => router.push('/(protected)/game/create')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push('/(protected)/game/create');
+          }}
+          accessibilityLabel="Challenge a friend"
+          accessibilityRole="button"
+          accessibilityHint="Start a new multiplayer game"
         >
           <View style={styles.challengeIcon}>
             <Ionicons name="game-controller" size={28} color={colors.greenGlow} />
@@ -212,12 +227,16 @@ export default function GameHubScreen() {
                     <TouchableOpacity
                       style={styles.declineButton}
                       onPress={() => handleDeclineInvitation(invitation.gameId, invitation.hostId.fullName)}
+                      accessibilityLabel={`Decline challenge from ${invitation.hostId.fullName}`}
+                      accessibilityRole="button"
                     >
-                      <Ionicons name="close" size={20} color="#FF6B6B" />
+                      <Ionicons name="close" size={20} color={colors.error} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.acceptButton}
                       onPress={() => handleAcceptInvitation(invitation.gameId)}
+                      accessibilityLabel={`Accept challenge from ${invitation.hostId.fullName}`}
+                      accessibilityRole="button"
                     >
                       <Ionicons name="checkmark" size={20} color={colors.charcoal} />
                       <Text style={styles.acceptText}>Accept</Text>
@@ -310,9 +329,7 @@ const styles = StyleSheet.create({
   challengeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 16,
+    ...cardStyle,
     marginBottom: 28,
     borderWidth: 2,
     borderColor: colors.greenGlow + '40',
@@ -369,9 +386,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   invitationCard: {
-    backgroundColor: colors.darkGrey,
-    borderRadius: 16,
-    padding: 16,
+    ...cardStyle,
   },
   invitationHeader: {
     flexDirection: 'row',
@@ -414,7 +429,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FF6B6B20',
+    backgroundColor: colors.error + '20',
     borderRadius: 10,
     paddingVertical: 12,
   },

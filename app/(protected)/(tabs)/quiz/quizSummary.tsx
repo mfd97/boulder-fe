@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { colors } from "@/constants/colors";
+import { spacing } from "@/constants/spacing";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 import ConfettiCannon from "react-native-confetti-cannon";
@@ -131,9 +132,7 @@ export default function QuizSummaryScreen() {
 
   // Handle starting a new session on the same topic
   const handleStartNewSession = () => {
-    console.log("handleStartNewSession called", { topic, difficulty, isGenerating });
     if (isGenerating) return;
-    console.log("Starting new quiz with:", { topic, difficulty });
     startNewQuiz({ topic, difficulty });
   };
 
@@ -231,14 +230,14 @@ export default function QuizSummaryScreen() {
                   <Ionicons
                     name={isCorrect ? "checkmark" : "close"}
                     size={16}
-                    color={isCorrect ? colors.greenGlow : "#FF6B6B"}
+                    color={isCorrect ? colors.success : colors.error}
                   />
                 </View>
 
                 {/* Question Content */}
                 <View style={styles.questionContent}>
                   <Text style={styles.questionLabel}>QUESTION {index + 1}</Text>
-                  <Text style={styles.questionText} numberOfLines={2}>{q.question}</Text>
+                  <Text style={styles.questionText} numberOfLines={3}>{q.question}</Text>
                   
                   {/* User's Answer */}
                   <View style={[
@@ -267,7 +266,7 @@ export default function QuizSummaryScreen() {
 
         {/* Start New Session Button */}
         <TouchableOpacity
-          style={styles.actionButton}
+          style={[styles.actionButton, isGenerating && styles.actionButtonDisabled]}
           onPress={handleStartNewSession}
           disabled={isGenerating}
         >
@@ -376,14 +375,14 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   questionsList: {
-    marginBottom: 24,
+    marginBottom: spacing.xxl,
   },
   questionItem: {
     flexDirection: "row",
     backgroundColor: colors.darkGrey,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
   },
   iconContainer: {
     width: 28,
@@ -391,13 +390,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   iconCorrect: {
     backgroundColor: "rgba(159, 242, 148, 0.15)",
   },
   iconIncorrect: {
-    backgroundColor: "rgba(255, 107, 107, 0.15)",
+    backgroundColor: colors.error + "26",
   },
   questionContent: {
     flex: 1,
@@ -413,8 +412,8 @@ const styles = StyleSheet.create({
     color: colors.offWhite,
     fontSize: 15,
     fontWeight: "500",
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: 22,
+    marginBottom: spacing.md,
   },
   answerPill: {
     alignSelf: "flex-start",
@@ -428,7 +427,7 @@ const styles = StyleSheet.create({
   answerIncorrect: {
     backgroundColor: colors.darkGrey,
     borderWidth: 1,
-    borderColor: "rgba(255, 107, 107, 0.3)",
+    borderColor: colors.error + "4D",
   },
   answerText: {
     fontSize: 14,

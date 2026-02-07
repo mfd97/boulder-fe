@@ -11,8 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
+import { spacing } from '@/constants/spacing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -42,6 +45,12 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
     title: 'Track Your Mastery',
     description: 'See your progress with detailed statistics. Identify your strongest topics and areas for improvement.',
   },
+  {
+    id: '4',
+    icon: 'game-controller-outline',
+    title: 'Compete & Climb',
+    description: 'Challenge friends to real-time quizzes and see who comes out on top. Climb the friends leaderboard and stay on your toes.',
+  },
 ];
 
 const ONBOARDING_KEY = '@boulder_onboarding_complete';
@@ -63,10 +72,12 @@ export default function OnboardingScreen() {
   };
 
   const handleSkip = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     handleComplete();
   };
 
   const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentIndex < ONBOARDING_SLIDES.length - 1) {
       flatListRef.current?.scrollToIndex({
         index: currentIndex + 1,
@@ -140,7 +151,12 @@ export default function OnboardingScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Skip Button */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+        <TouchableOpacity
+          onPress={handleSkip}
+          style={styles.skipButton}
+          accessibilityLabel="Skip onboarding"
+          accessibilityRole="button"
+        >
           <Text style={styles.skipText}>Skip</Text>
         </TouchableOpacity>
       </View>
@@ -168,7 +184,12 @@ export default function OnboardingScreen() {
       <View style={styles.bottomSection}>
         {renderDots()}
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+        <TouchableOpacity
+          style={styles.nextButton}
+          onPress={handleNext}
+          accessibilityLabel={isLastSlide ? 'Get started' : 'Next slide'}
+          accessibilityRole="button"
+        >
           <Text style={styles.nextButtonText}>
             {isLastSlide ? 'Get Started' : 'Next'}
           </Text>
@@ -191,23 +212,22 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
   },
   skipButton: {
-    padding: 10,
+    padding: spacing.sm,
   },
   skipText: {
+    ...typography.body,
     color: colors.sage,
-    fontSize: 16,
-    fontWeight: '500',
   },
   slide: {
     width: SCREEN_WIDTH,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: spacing.section,
   },
   iconContainer: {
     width: 160,
@@ -216,51 +236,50 @@ const styles = StyleSheet.create({
     backgroundColor: colors.darkGrey,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: spacing.xxxl + spacing.lg,
   },
   title: {
+    ...typography.title,
     fontSize: 28,
-    fontWeight: 'bold',
     color: colors.offWhite,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   description: {
-    fontSize: 16,
+    ...typography.body,
     color: colors.offWhite,
     opacity: 0.8,
     textAlign: 'center',
-    lineHeight: 24,
   },
   bottomSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
+    height: spacing.sm,
+    borderRadius: spacing.xs,
     backgroundColor: colors.greenGlow,
-    marginHorizontal: 4,
+    marginHorizontal: spacing.xs,
   },
   nextButton: {
     backgroundColor: colors.sage,
     borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xxl,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   nextButtonText: {
+    ...typography.titleSmall,
     fontSize: 18,
-    fontWeight: 'bold',
     color: colors.charcoal,
     letterSpacing: 0.5,
   },
