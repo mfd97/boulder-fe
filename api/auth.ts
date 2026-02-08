@@ -47,3 +47,26 @@ export const logout = async (): Promise<void> => {
     // نكمل حتى لو فشل الـ request
   }
 };
+
+export interface UserProfile {
+  _id: string;
+  fullName: string;
+  email: string;
+  profilePicture?: string;
+  createdAt: string;
+}
+
+export async function getMe(): Promise<UserProfile> {
+  const response = await instance.get("/users/me");
+  return response.data.data.user;
+}
+
+export interface UpdateProfileData {
+  fullName?: string;
+  profilePicture?: string;
+}
+
+export async function updateProfile(data: UpdateProfileData): Promise<UserProfile> {
+  const response = await instance.put("/users/me", data);
+  return response.data.data.user;
+}

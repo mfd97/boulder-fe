@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import React from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-const _layout = () => {
+export default function GameLayout() {
   const { colors } = useTheme();
   return (
     <Stack 
@@ -16,6 +16,4 @@ const _layout = () => {
       }} 
     />
   );
-};
-
-export default _layout;
+}

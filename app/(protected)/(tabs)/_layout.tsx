@@ -1,16 +1,33 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '@/constants/colors';
+import * as Haptics from 'expo-haptics';
+import { useTheme } from '@/contexts/ThemeContext';
+
+function triggerTabHaptic() {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+}
 
 export default function TabsLayout() {
+  const router = useRouter();
+  const segments = useSegments();
+  const { colors } = useTheme();
+
+  // Check if we're on a nested screen within a tab
+  // segments looks like: ['(protected)', '(tabs)', 'quiz', 'CreateQuiz']
+  // If there's a 4th segment, we're on a nested screen
+  const isOnNestedQuizScreen = segments[2] === 'quiz' && segments.length > 3;
+  const isOnNestedBookmarksScreen = segments[2] === 'bookmarks' && segments.length > 3;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.greenGlow,
-        tabBarInactiveTintColor: colors.offWhite,
+        tabBarInactiveTintColor: colors.sage,
         tabBarStyle: {
-          backgroundColor: colors.charcoal,
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.sage + '40',
         },
       }}
     >
@@ -18,37 +35,61 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: 'HOME',
+          tabBarAccessibilityLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
           ),
         }}
+        listeners={{ tabPress: triggerTabHaptic }}
       />
       <Tabs.Screen
         name="quiz"
         options={{
           title: 'QUIZ',
+          tabBarAccessibilityLabel: 'Quiz',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="help-circle" size={size} color={color} />
           ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            triggerTabHaptic();
+            if (isOnNestedQuizScreen) {
+              e.preventDefault();
+              router.replace('/(protected)/(tabs)/quiz');
+            }
+          },
         }}
       />
       <Tabs.Screen
         name="bookmarks"
         options={{
-          title: 'BOOKMARKS',
+          title: 'HISTORY',
+          tabBarAccessibilityLabel: 'History',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bookmark" size={size} color={color} />
+            <Ionicons name="time" size={size} color={color} />
           ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            triggerTabHaptic();
+            if (isOnNestedBookmarksScreen) {
+              e.preventDefault();
+              router.replace('/(protected)/(tabs)/bookmarks');
+            }
+          },
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'PROFILE',
+          tabBarAccessibilityLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
         }}
+        listeners={{ tabPress: triggerTabHaptic }}
       />
     </Tabs>
   );

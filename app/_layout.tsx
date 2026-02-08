@@ -1,6 +1,6 @@
-import { Stack } from "expo-router";
-import { useEffect, useState, useCallback } from "react";
-import { View } from "react-native";
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { View, StatusBar } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,8 +11,10 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import LaunchScreen from "@/components/LaunchScreen";
-import { colors } from "@/constants/colors";
 import { AuthContext } from "@/context/AuthContext";
+import { SocketProvider, useSocket } from "@/contexts/SocketContext";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { onUnauthorized } from "@/lib/authEvents";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -23,29 +25,31 @@ function RootLayoutNav() {
   const [isLaunching, setIsLaunching] = useState(true);
   const appOpacity = useSharedValue(0);
   const [isAuth, setIsAuth] = useState(false);
-
-  // const logout = useCallback(async () => {
-  //   await SecureStore.deleteItemAsync("token");
-  //   setUser(null);
-  // }, []);
+  const router = useRouter();
+  const { disconnect } = useSocket();
+  const { colors, isDark } = useTheme();
 
   const checkToken = async () => {
-    const token = await SecureStore.getItemAsync("token")
-    if(token){
-      setIsAuth(true)
-    }
-  }
-
+    const token = await SecureStore.getItemAsync("token");
+    if (token) setIsAuth(true);
+  };
 
   useEffect(() => {
-    checkToken()
+    checkToken();
     const timer = setTimeout(() => {
       SplashScreen.hideAsync();
     }, 100);
     return () => clearTimeout(timer);
-
-
   }, []);
+
+  useEffect(() => {
+    const unsub = onUnauthorized(() => {
+      disconnect();
+      setIsAuth(false);
+      router.replace("/login");
+    });
+    return unsub;
+  }, [disconnect, router]);
 
   const handleAnimationComplete = () => {
     appOpacity.value = withTiming(1, {
@@ -63,13 +67,14 @@ function RootLayoutNav() {
 
   return (
     <AuthContext.Provider value={{isAuth, setIsAuth}}>
-      <View style={{ flex: 1, backgroundColor: colors.charcoal }}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         {isLaunching && (
           <LaunchScreen onAnimationComplete={handleAnimationComplete} />
         )}
         <Animated.View
           style={[
-            { flex: 1, backgroundColor: colors.charcoal },
+            { flex: 1, backgroundColor: colors.background },
             appAnimatedStyle,
             { position: isLaunching ? "absolute" : "relative" },
           ]}
@@ -78,7 +83,7 @@ function RootLayoutNav() {
             screenOptions={{
               headerShown: false,
               contentStyle: {
-                backgroundColor: colors.charcoal,
+                backgroundColor: colors.background,
               },
             }}
           />
@@ -91,7 +96,11 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RootLayoutNav />
+      <SocketProvider>
+        <ThemeProvider>
+          <RootLayoutNav />
+        </ThemeProvider>
+      </SocketProvider>
     </QueryClientProvider>
   );
 }
