@@ -168,12 +168,14 @@ export default function QuizScreen() {
             </View>
 
             {/* Options */}
-            {q.options.map((option) => {
+            {q.options.map((option, index) => {
               const selected = answers[q._id] === option;
+              console.log("selected", selected);
+              console.log("option", option);
 
               return (
                 <TouchableOpacity
-                  key={option}
+                  key={index}
                   style={[styles.option, selected && styles.optionSelected]}
                   onPress={() => handleSelect(q._id, option)}
                   accessibilityLabel={`option-${option}`}

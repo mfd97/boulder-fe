@@ -119,7 +119,6 @@ export default function GamePlayScreen() {
       setTimeLeft(data.timeLimit / 1000);
       setHostScore(data.hostScore);
       setGuestScore(data.guestScore);
-
       // Start timer animation
       timerProgress.value = 0;
       timerProgress.value = withTiming(1, {
@@ -343,14 +342,14 @@ export default function GamePlayScreen() {
       <View style={styles.scoresBar}>
         <View style={styles.scoreItem}>
           <Text style={styles.scoreLabel}>You</Text>
-          <Text style={styles.scoreValue}>{hostScore}</Text>
+          <Text style={styles.scoreValue}>{isHost ? hostScore : guestScore}</Text>
         </View>
         <View style={styles.scoreDivider}>
           <Text style={styles.vs}>VS</Text>
         </View>
         <View style={styles.scoreItem}>
           <Text style={styles.scoreLabel}>Opponent</Text>
-          <Text style={styles.scoreValue}>{guestScore}</Text>
+          <Text style={styles.scoreValue}>{isHost ? guestScore : hostScore}</Text>
           {opponentAnswered && !showingResult && (
             <View style={styles.answeredBadge}>
               <Ionicons name="checkmark" size={12} color={colors.greenGlow} />
