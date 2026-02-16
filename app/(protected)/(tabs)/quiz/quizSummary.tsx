@@ -67,9 +67,9 @@ export default function QuizSummaryScreen() {
         params: { quizData: JSON.stringify(quizData) },
       });
     },
-    onError: (error: Error) => {
-      console.log("Quiz creation error:", error);
-      Alert.alert("Error", error.message || "Failed to generate quiz. Please try again.");
+    onError: (error: unknown) => {
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      Alert.alert("Error", msg || "Failed to generate quiz. Please try again.");
     },
   });
 

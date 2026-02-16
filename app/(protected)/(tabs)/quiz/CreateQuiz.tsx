@@ -45,9 +45,9 @@ export default function StartQuizScreen() {
         params: { quizData: JSON.stringify(data) },
       });
     },
-    onError: (error) => {
-      console.error(error);
-      Alert.alert("Error", "Failed to generate quiz. Please try again.");
+    onError: (error: unknown) => {
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      Alert.alert("Error", msg || "Failed to generate quiz. Please try again.");
     },
   });
 

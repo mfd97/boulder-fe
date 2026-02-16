@@ -100,10 +100,10 @@ export default function QuizHubScreen() {
         params: { quizData: JSON.stringify(data) },
       });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       setGeneratingTopic('');
-      console.error(error);
-      Alert.alert("Error", "Failed to generate quiz. Please try again.");
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      Alert.alert("Error", msg || "Failed to generate quiz. Please try again.");
     },
   });
 
